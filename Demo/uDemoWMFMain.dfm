@@ -2,22 +2,24 @@ object DemoWMFMain: TDemoWMFMain
   Left = 0
   Top = 0
   Caption = 'DemoWMFMain'
-  ClientHeight = 561
-  ClientWidth = 899
+  ClientHeight = 681
+  ClientWidth = 1264
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
   Font.Height = -12
   Font.Name = 'Segoe UI Semibold'
   Font.Style = []
-  Position = poDesktopCenter
+  OldCreateOrder = True
+  Position = poScreenCenter
   OnCreate = FormCreate
   OnDestroy = FormDestroy
+  PixelsPerInch = 96
   TextHeight = 15
   object Splitter1: TSplitter
     Left = 225
     Top = 0
-    Height = 561
+    Height = 681
     ExplicitLeft = 200
     ExplicitTop = 200
     ExplicitHeight = 100
@@ -26,12 +28,13 @@ object DemoWMFMain: TDemoWMFMain
     Left = 0
     Top = 0
     Width = 225
-    Height = 561
+    Height = 681
     Align = alLeft
     TabOrder = 0
+    ExplicitHeight = 596
     DesignSize = (
       225
-      561)
+      681)
     object Label2: TLabel
       Left = 8
       Top = 6
@@ -210,21 +213,25 @@ object DemoWMFMain: TDemoWMFMain
   object PagesPanel: TPanel
     Left = 228
     Top = 0
-    Width = 671
-    Height = 561
+    Width = 1036
+    Height = 681
     Align = alClient
     TabOrder = 1
+    ExplicitWidth = 863
+    ExplicitHeight = 596
     object StatusPanel: TPanel
       Left = 1
-      Top = 536
-      Width = 669
+      Top = 656
+      Width = 1034
       Height = 24
       Align = alBottom
       TabOrder = 0
+      ExplicitTop = 571
+      ExplicitWidth = 861
       object Status: TLabel
         Left = 1
         Top = 1
-        Width = 667
+        Width = 1032
         Height = 22
         Align = alClient
         Alignment = taCenter
@@ -243,15 +250,21 @@ object DemoWMFMain: TDemoWMFMain
     object PageControl1: TPageControl
       Left = 1
       Top = 1
-      Width = 669
-      Height = 535
-      ActivePage = TabSheet1
+      Width = 1034
+      Height = 655
+      ActivePage = TabSheet2
       Align = alClient
       MultiLine = True
       TabOrder = 1
       OnChange = PageControl1Change
+      ExplicitWidth = 861
+      ExplicitHeight = 570
       object TabSheet1: TTabSheet
         Caption = 'Animate a Canvas-Drawing'
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object Preview: TPaintBox
           Left = 144
           Top = 168
@@ -269,7 +282,7 @@ object DemoWMFMain: TDemoWMFMain
         object Label9: TLabel
           Left = 0
           Top = 0
-          Width = 661
+          Width = 853
           Height = 44
           Align = alTop
           Alignment = taCenter
@@ -295,10 +308,12 @@ object DemoWMFMain: TDemoWMFMain
       object TabSheet2: TTabSheet
         Caption = 'Slideshow with Crossfade-Transitions'
         ImageIndex = 1
+        ExplicitWidth = 853
+        ExplicitHeight = 540
         object Splitter2: TSplitter
           Left = 313
           Top = 0
-          Height = 485
+          Height = 625
           ExplicitLeft = 320
           ExplicitTop = 168
           ExplicitHeight = 100
@@ -307,12 +322,13 @@ object DemoWMFMain: TDemoWMFMain
           Left = 0
           Top = 0
           Width = 313
-          Height = 485
+          Height = 625
           Align = alLeft
           TabOrder = 0
+          ExplicitHeight = 540
           object Splitter3: TSplitter
             Left = 1
-            Top = 247
+            Top = 387
             Width = 311
             Height = 3
             Cursor = crVSplit
@@ -341,18 +357,20 @@ object DemoWMFMain: TDemoWMFMain
             Left = 1
             Top = 26
             Width = 311
-            Height = 221
+            Height = 361
             Align = alClient
             TabOrder = 1
+            ExplicitHeight = 276
           end
           object Panel6: TPanel
             Left = 1
-            Top = 250
+            Top = 390
             Width = 311
             Height = 234
             Align = alBottom
             Caption = 'Panel6'
             TabOrder = 2
+            ExplicitTop = 305
             object FileBox: TListBox
               Left = 1
               Top = 1
@@ -368,17 +386,19 @@ object DemoWMFMain: TDemoWMFMain
         object Panel4: TPanel
           Left = 316
           Top = 0
-          Width = 345
-          Height = 485
+          Width = 710
+          Height = 625
           Align = alClient
           TabOrder = 1
+          ExplicitWidth = 537
+          ExplicitHeight = 540
           DesignSize = (
-            345
-            485)
+            710
+            625)
           object ImageCount: TLabel
             Left = 1
             Top = 1
-            Width = 343
+            Width = 708
             Height = 15
             Align = alTop
             Alignment = taCenter
@@ -389,10 +409,11 @@ object DemoWMFMain: TDemoWMFMain
           object Panel5: TPanel
             Left = 1
             Top = 48
-            Width = 343
+            Width = 708
             Height = 400
             Anchors = [akLeft, akTop, akRight]
             TabOrder = 0
+            ExplicitWidth = 535
             object Label7: TLabel
               Left = 15
               Top = 237
@@ -525,6 +546,10 @@ object DemoWMFMain: TDemoWMFMain
       object TabSheet3: TTabSheet
         Caption = 'Video from Images and a Video Clip'
         ImageIndex = 2
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object StartImageFile: TLabel
           Left = 152
           Top = 24
@@ -556,8 +581,8 @@ object DemoWMFMain: TDemoWMFMain
         object Label14: TLabel
           AlignWithMargins = True
           Left = 3
-          Top = 399
-          Width = 655
+          Top = 454
+          Width = 847
           Height = 83
           Align = alBottom
           Alignment = taCenter
@@ -574,6 +599,7 @@ object DemoWMFMain: TDemoWMFMain
           ShowAccelChar = False
           Layout = tlCenter
           WordWrap = True
+          ExplicitTop = 399
           ExplicitWidth = 656
         end
         object Label15: TLabel
@@ -681,6 +707,10 @@ object DemoWMFMain: TDemoWMFMain
       object TabSheet4: TTabSheet
         Caption = 'Use TBitmapEncoderWMF as a transcoder'
         ImageIndex = 3
+        ExplicitLeft = 0
+        ExplicitTop = 0
+        ExplicitWidth = 0
+        ExplicitHeight = 0
         object TranscoderInput: TLabel
           Left = 136
           Top = 36
@@ -753,7 +783,6 @@ object DemoWMFMain: TDemoWMFMain
   end
   object FODAudio: TFileOpenDialog
     FavoriteLinks = <>
-    FileName = 'D:\DelphiSource\DelphiRio\mystuffR\Bitmaps2Video\EncoderClassWin'
     FileTypes = <
       item
         DisplayName = 'Audio files (*.wav;*.mp3;*.aac;*.wma)'
@@ -797,9 +826,6 @@ object DemoWMFMain: TDemoWMFMain
   end
   object FODVideo: TFileOpenDialog
     FavoriteLinks = <>
-    FileName = 
-      'D:\DelphiSource\DelphiRio\othstuffR\MfPack-Master\MfPack\Samples' +
-      '\Simple Player'
     FileTypes = <
       item
         DisplayName = 'All supported'
@@ -817,7 +843,7 @@ object DemoWMFMain: TDemoWMFMain
     Left = 209
     Top = 431
     Bitmap = {
-      494C010101000800040010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010101000800080010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000000000000000000046819A004681
       9A0046819A0046819A0046819A0046819A003B6F8800305E7700305E7700305E

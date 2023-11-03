@@ -68,8 +68,8 @@ type
     CodecName: string;
     Duration: int64;
     VideoWidth, VideoHeight: DWord;
-    FrameRate: single;
-    PixelAspect: single;
+    FrameRate: Single;
+    PixelAspect: Single;
     InterlaceMode: DWord;
     InterlaceModeName: string;
     AudioStreamCount: DWord;
@@ -84,12 +84,12 @@ type
     fVideoInfo: TVideoInfo;
     pMediaTypeOut: IMFMediaType;
     fNewWidth, fNewHeight: DWord;
-    fNewFrameRate: single;
+    fNewFrameRate: Single;
     fInputFile: string;
-    fEndOfFile: boolean;
+    fEndOfFile: Boolean;
   public
     constructor Create(const InputFile: string; NewHeight: DWord;
-      NewFrameRate: single);
+      NewFrameRate: Single);
     procedure NextValidSampleToBitmap(const bm: TBitmap;
       out Timestamp, Duration: int64);
     procedure GetNextValidSample(out pSample: IMFSample;
@@ -97,8 +97,8 @@ type
     destructor Destroy; override;
     property NewVideoWidth: DWord read fNewWidth;
     property NewVideoHeight: DWord read fNewHeight;
-    property NewFrameRate: single read fNewFrameRate;
-    property EndOfFile: boolean read fEndOfFile;
+    property NewFrameRate: Single read fNewFrameRate;
+    property EndOfFile: Boolean read fEndOfFile;
     property VideoInfo: TVideoInfo read fVideoInfo;
   end;
 
@@ -106,13 +106,13 @@ function GetVideoInfo(const VideoFileName: string): TVideoInfo;
 
 // Very slow at the moment. Need to apply seeking to speed it up.
 function GetFrameBitmap(const VideoFileName: string; const bm: TBitmap;
-  bmHeight: DWord; FrameNo: DWord): boolean;
+  bmHeight: DWord; FrameNo: DWord): Boolean;
 
 implementation
 
 function GetVideoInfo(const VideoFileName: string): TVideoInfo;
 var
-  Count: integer;
+  Count: Integer;
   GUID: TGUID;
   _var: TPropVariant;
   Num, Den: DWord;
@@ -124,28 +124,35 @@ var
   pb: PByte;
   FourCC: DWord;
   FourCCString: string[4];
-  I: integer;
+  I: Integer;
   hr: HResult;
   err: string;
   AudioStreamNo: DWord;
 const
   ProcName = 'GetVideoInfo';
+
   procedure CheckFail(hr: HResult);
-  begin
-    inc(Count);
-    if not succeeded(hr) then
     begin
-      err := '$' + IntToHex(hr);
-      raise Exception.Create('Fail in call nr. ' + IntToStr(Count) + ' of ' +
-        ProcName + ' with result ' + err);
+      inc(Count);
+      if not succeeded(hr) then
+        begin
+          err := '$' + IntToHex(hr, 8);
+          raise Exception.CreateFmt('%s %d %s %s %S %s',
+                                    ['Fail in call nr.',
+                                     Count,
+                                     'of',
+                                     ProcName,
+                                     'with result',
+                                     err]);
+        end;
     end;
-  end;
 
 begin
   Count := 0;
   pReader := nil;
   hrCoInit := E_FAIL;
   hrStartup := E_FAIL;
+
   try
     hrCoInit := CoInitializeEx(nil, COINIT_APARTMENTTHREADED);
     CheckFail(hrCoInit);
@@ -154,7 +161,7 @@ begin
     CheckFail(hrStartup);
 
     CheckFail(MFCreateAttributes(attribs, 1));
-    CheckFail(attribs.SetUINT32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING,
+    CheckFail(attribs.SetUInt32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING,
       UInt32(true)));
     // Create a sourcereader for the video file
     CheckFail(MFCreateSourceReaderFromURL(PWideChar(VideoFileName), attribs,
@@ -221,7 +228,7 @@ begin
       CheckFail(MFGetAttributeRatio(pMediaTypeIn, MF_MT_PIXEL_ASPECT_RATIO,
         Num, Den));
     Result.PixelAspect := Num / Den;
-    hr := pMediaTypeIn.GetUINT32(MF_MT_INTERLACE_MODE, Result.InterlaceMode);
+    hr := pMediaTypeIn.GetUInt32(MF_MT_INTERLACE_MODE, Result.InterlaceMode);
     if Failed(hr) then
       Result.InterlaceMode := 0;
     case Result.InterlaceMode of
@@ -250,7 +257,7 @@ begin
       hr := pReader.GetNativeMediaType(AudioStreamNo, 0, pMediaTypeIn);
       if Failed(hr) then
       begin
-        err := IntToHex(hr); // MF_E_INVALIDSTREAMNUMBER
+        err := IntToHex(hr, 8); // MF_E_INVALIDSTREAMNUMBER
         break;
       end;
       CheckFail(pMediaTypeIn.GetMajorType(GUID));
@@ -267,7 +274,7 @@ begin
 end;
 
 function GetFrameBitmap(const VideoFileName: string; const bm: TBitmap;
-  bmHeight: DWord; FrameNo: DWord): boolean;
+  bmHeight: DWord; FrameNo: DWord): Boolean;
 var
   VT: TVideoTransformer;
   FrameCount: DWord;
@@ -297,27 +304,35 @@ end;
 { TVideoTransformer }
 
 constructor TVideoTransformer.Create(const InputFile: string; NewHeight: DWord;
-  NewFrameRate: single);
+  NewFrameRate: Single);
 var
-  Count: integer;
+  Count: Integer;
   attribs: IMFAttributes;
   pPartialType: IMFMediaType;
+
 const
   ProcName = 'TVideoTransformer.Create';
+
   procedure CheckFail(hr: HResult);
-  begin
-    inc(Count);
-    if not succeeded(hr) then
     begin
-      raise Exception.Create('Fail in call nr. ' + IntToStr(Count) + ' of ' +
-        ProcName + ' with result ' + IntToHex(hr));
+      inc(Count);
+      if FAILED(hr) then
+        begin
+          raise Exception.CreateFmt('%s %d %s %s %s %s',
+                                    ['Fail in call nr.',
+                                    Count,
+                                    'of',
+                                    ProcName,
+                                    'with result',
+                                    IntToHex(hr, 8)]);
+        end;
     end;
-  end;
 
 begin
   Count := 0;
   fInputFile := InputFile;
   fNewHeight := NewHeight;
+
   try
     fVideoInfo := GetVideoInfo(fInputFile);
     if NewFrameRate = 0 then
@@ -331,10 +346,10 @@ begin
     CheckFail(MFCreateAttributes(attribs, 1));
 
     // Enable the source-reader to make color-conversion, change video size, frame-rate and interlace-mode
-    CheckFail(attribs.SetUINT32
+    CheckFail(attribs.SetUInt32
       (MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, UInt32(true)));
     // The next causes problems for some video formats
-    // CheckFail(attribs.SetUINT32
+    // CheckFail(attribs.SetUInt32
     // (MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, UInt32(true)));
     // Create a sourcereader for the video file
     CheckFail(MFCreateSourceReaderFromURL(PWideChar(fInputFile), attribs,
@@ -343,7 +358,7 @@ begin
     CheckFail(MFCreateMediaType(pPartialType));
     CheckFail(pPartialType.SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video));
     CheckFail(pPartialType.SetGUID(MF_MT_SUBTYPE, MFVideoFormat_RGB32));
-    CheckFail(pPartialType.SetUINT32(MF_MT_INTERLACE_MODE, 2));
+    CheckFail(pPartialType.SetUInt32(MF_MT_INTERLACE_MODE, 2));
     // 2=progressive.
     CheckFail(MFSetAttributeRatio(pPartialType, MF_MT_FRAME_RATE,
       round(fNewFrameRate * 100), 100));
@@ -382,19 +397,25 @@ end;
 procedure TVideoTransformer.GetNextValidSample(out pSample: IMFSample;
   out Timestamp, Duration: int64);
 var
-  Count: integer;
+  Count: Integer;
   pSampleLoc: IMFSample;
   Flags: DWord;
   hr: HResult;
 const
   ProcName = 'TVideoTransformer.GetNextValidSample';
+
   procedure CheckFail(hr: HResult);
-  begin
-    inc(Count);
-    if not succeeded(hr) then
     begin
-      raise Exception.Create('Fail in call nr. ' + IntToStr(Count) + ' of ' +
-        ProcName + ' with result ' + IntToHex(hr));
+      inc(Count);
+      if Failed(hr) then
+        begin
+          raise Exception.CreateFmt('%s %d %s %s %s %s',
+                                    ['Fail in call nr.',
+                                    Count,
+                                    'of',
+                                    ProcName,
+                                    'with result',
+                                    IntToHex(hr, 8)]);
     end;
   end;
 
@@ -446,23 +467,27 @@ end;
 procedure TVideoTransformer.NextValidSampleToBitmap(const bm: TBitmap;
   out Timestamp, Duration: int64);
 var
-  Count: integer;
+  Count: Integer;
   pSample: IMFSample;
   pBuffer: IMFMediaBuffer;
-  Stride: integer;
+  Stride: Integer;
   pRow, pData: PByte;
   ImageSize: DWord;
+
 const
   ProcName = 'TVideoTransformer.NextValidSampleToBitmap';
+
   procedure CheckFail(hr: HResult);
-  begin
-    inc(Count);
-    if not succeeded(hr) then
     begin
-      raise Exception.Create('Fail in call nr. ' + IntToStr(Count) + ' of ' +
-        ProcName + ' with result $' + IntToHex(hr));
+      inc(Count);
+      if Failed(hr) then
+        begin
+          raise Exception.CreateFmt('Fail in call nr. %d of with result $%s',
+                                    [Count,
+                                    IntToHex(hr, 8)]);
+
+        end;
     end;
-  end;
 
 begin
   if fEndOfFile then
@@ -470,10 +495,10 @@ begin
   Count := 0;
   GetNextValidSample(pSample, Timestamp, Duration);
   // an invalid sample is nil
-  if assigned(pSample) then
+  if Assigned(pSample) then
   begin
     CheckFail(pSample.ConvertToContiguousBuffer(pBuffer));
-    if assigned(pBuffer) then
+    if Assigned(pBuffer) then
     begin
       bm.PixelFormat := pf32bit;
       bm.SetSize(fNewWidth, fNewHeight);

@@ -12,7 +12,9 @@ uses
   System.Variants,
   System.Classes,
   System.Math,
+  {$IF COMPILERVERSION > 28.0}
   System.ImageList,
+  {$ENDIF}
   System.Types,
   System.Diagnostics,
   System.IOUtils,
@@ -162,51 +164,51 @@ type
     fFileList: TStringlist;
     fOutputFile: string;
     fCodecList: TCodecIdArray;
-    fWriting: boolean;
+    fWriting: Boolean;
     fFramebm: TBitmap;
-    fUserAbort: boolean;
+    fUserAbort: Boolean;
     function GetOutputFileName: string;
     procedure DoUpdate(var msg: TMessage); message MsgUpdate;
     procedure DirectoryTreeChange(Sender: TObject; node: TTreeNode);
-    function GetAspect: double;
-    function GetVideoWidth: integer;
+    function GetAspect: Double;
+    function GetVideoWidth: Integer;
 
     // Important procedure showing the use of TBitmapEncoderWMF
     procedure MakeSlideshow(const sl: TStringlist; const wic: TWicImage;
-      const bm: TBitmap; const bme: TBitmapEncoderWMF; var Done: boolean;
-      threaded: boolean);
+      const bm: TBitmap; const bme: TBitmapEncoderWMF; var Done: Boolean;
+      threaded: Boolean);
 
-    function GetFrameRate: single;
-    function GetDoCrop: boolean;
-    function GetDoZoomInOut: boolean;
-    function GetVideoHeight: integer;
+    function GetFrameRate: Single;
+    function GetDoCrop: Boolean;
+    function GetDoZoomInOut: Boolean;
+    function GetVideoHeight: Integer;
     function GetAudioFile: string;
-    function GetQuality: integer;
-    function GetAudioBitRate: integer;
-    function GetAudioSampleRate: integer;
+    function GetQuality: Integer;
+    function GetAudioBitRate: Integer;
+    function GetAudioSampleRate: Integer;
     function GetAudioStart: int64;
-    function GetAudioDialog: boolean;
+    function GetAudioDialog: Boolean;
     procedure FileBoxSelChange(Sender: TObject);
     procedure TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-      VideoTime: int64; var DoAbort: boolean);
+      VideoTime: int64; var DoAbort: Boolean);
     procedure DisplayVideoInfo(const aMemo: TMemo; const VideoInfo: TVideoInfo);
     { Private-Deklarationen }
   public
     // properties which read the input parameters for the bitmap-encoder
     // off the controls of the form
     property OutputFileName: string read GetOutputFileName;
-    property Aspect: double read GetAspect;
-    property VideoHeight: integer read GetVideoHeight;
-    property VideoWidth: integer read GetVideoWidth;
-    property FrameRate: single read GetFrameRate;
-    property Quality: integer read GetQuality;
-    property DoCrop: boolean read GetDoCrop;
-    property DoZoomInOut: boolean read GetDoZoomInOut;
+    property Aspect: Double read GetAspect;
+    property VideoHeight: Integer read GetVideoHeight;
+    property VideoWidth: Integer read GetVideoWidth;
+    property FrameRate: Single read GetFrameRate;
+    property Quality: Integer read GetQuality;
+    property DoCrop: Boolean read GetDoCrop;
+    property DoZoomInOut: Boolean read GetDoZoomInOut;
     property AudioFile: string read GetAudioFile;
-    property AudioSampleRate: integer read GetAudioSampleRate;
-    property AudioBitRate: integer read GetAudioBitRate;
+    property AudioSampleRate: Integer read GetAudioSampleRate;
+    property AudioBitRate: Integer read GetAudioBitRate;
     property AudioStart: int64 read GetAudioStart;
-    property AudioDialog: boolean read GetAudioDialog;
+    property AudioDialog: Boolean read GetAudioDialog;
     { Public-Deklarationen }
   end;
 
@@ -226,7 +228,7 @@ begin
     Result := '';
 end;
 
-function PidlFree(var IdList: PItemIDList): boolean;
+function PidlFree(var IdList: PItemIDList): Boolean;
 var
   Malloc: IMalloc;
 begin
@@ -259,17 +261,17 @@ end;
 
 procedure TDemoWMFMain.WriteAnimationClick(Sender: TObject);
 var
-  i, j, w, h: integer;
-  A, r, theta, dtheta: double;
-  xCenter, yCenter: integer;
-  scale: double;
+  i, j, w, h: Integer;
+  A, r, theta, dtheta: Double;
+  xCenter, yCenter: Integer;
+  scale: Double;
   bm, pre: TBitmap;
   points: array of TPoint;
-  jmax: integer;
+  jmax: Integer;
   bme: TBitmapEncoderWMF;
   StopWatch: TStopWatch;
 
-  function dist(o: double): double; inline;
+  function dist(o: Double): Double; inline;
   begin
     Result := 2 - 0.2 * o;
   end;
@@ -375,18 +377,18 @@ end;
 
 procedure TDemoWMFMain.MakeSlideshow(const sl: TStringlist;
   const wic: TWicImage; const bm: TBitmap; const bme: TBitmapEncoderWMF;
-  var Done: boolean; threaded: boolean);
+  var Done: Boolean; threaded: Boolean);
 var
-  i: integer;
-  crop: boolean;
-  dice: single;
+  i: Integer;
+  crop: Boolean;
+  dice: Single;
   // TZoom is a record (xcenter, ycenter, radius) defining a virtual zoom-rectangle
   // (xcenter-radius, ycenter-radius, xcenter+radius, ycenter+radius).
   // This rectangle should be a sub-rectangle of [0,1]x[0,1].
   // If multipied by the width/height of a target rectangle, it defines
   // an aspect-preserving sub-rectangle of the target.
   Zooms, Zoom: TZoom;
-  DoInOut: boolean;
+  DoInOut: Boolean;
 begin
   wic.LoadFromFile(sl.Strings[0]);
   WicToBmp(wic, bm);
@@ -438,10 +440,10 @@ var
   wic: TWicImage;
   StopWatch: TStopWatch;
   task: itask;
-  Done: boolean;
+  Done: Boolean;
   sl: TStringlist;
   af: string;
-  i: integer;
+  i: Integer;
 begin
   if fWriting then
   begin
@@ -529,18 +531,24 @@ end;
 
 procedure TDemoWMFMain.CombineToVideoClick(Sender: TObject);
 var
-  proceed: boolean;
+  proceed: Boolean;
   bme: TBitmapEncoderWMF;
   wic: TWicImage;
   bm: TBitmap;
   af: string;
   StopWatch: TStopWatch;
-  fps: double;
+  fps: Double;
+
 begin
+  {$IF COMPILERVERSION < 29.0}
+  // To prevent hint "fps could not be initialized" on lower versions.
+  fps := 0.0;
+  {$ENDIF}
+
   if fWriting then
   begin
     ShowMessage('Encoding in progress, wait until finished.');
-    exit;
+    Exit;
   end;
   fWriting := true;
   try
@@ -619,6 +627,7 @@ begin
   end;
 end;
 
+
 procedure TDemoWMFMain.Button1Click(Sender: TObject);
 var
   VideoInfo: TVideoInfo;
@@ -642,9 +651,9 @@ begin
 end;
 
 procedure TDemoWMFMain.TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-VideoTime: int64; var DoAbort: boolean);
+VideoTime: int64; var DoAbort: Boolean);
 var
-  min, sec: integer;
+  min, sec: Integer;
 begin
   sec := VideoTime div 1000;
   min := sec div 60;
@@ -697,7 +706,7 @@ end;
 
 procedure TDemoWMFMain.DirectoryTreeChange(Sender: TObject; node: TTreeNode);
 var
-  i: integer;
+  i: Integer;
 begin
   fDirectoryTree.GetAllFiles(fFileList, '*.bmp;*.jpg;*.png;*.gif');
   FileBox.Clear;
@@ -723,7 +732,7 @@ end;
 
 procedure TDemoWMFMain.FileExtChange(Sender: TObject);
 var
-  i: integer;
+  i: Integer;
 begin
   fCodecList := GetSupportedCodecs(FileExt.Items[FileExt.ItemIndex]);
   Codecs.Clear;
@@ -735,7 +744,7 @@ end;
 
 procedure TDemoWMFMain.FormCreate(Sender: TObject);
 var
-  i: integer;
+  i: Integer;
 begin
   fDirectoryTree := TDirectoryTree.Create(self);
   fDirectoryTree.Parent := Panel3;
@@ -783,7 +792,7 @@ begin
   end;
 end;
 
-function TDemoWMFMain.GetAspect: double;
+function TDemoWMFMain.GetAspect: Double;
 begin
   Result := 1;
   case AspectRatio.ItemIndex of
@@ -796,12 +805,12 @@ begin
   end;
 end;
 
-function TDemoWMFMain.GetAudioBitRate: integer;
+function TDemoWMFMain.GetAudioBitRate: Integer;
 begin
   Result := StrToInt(Bitrate.Text);
 end;
 
-function TDemoWMFMain.GetAudioDialog: boolean;
+function TDemoWMFMain.GetAudioDialog: Boolean;
 begin
   Result := AddAudio.Checked;
 end;
@@ -816,7 +825,7 @@ begin
   Result := FODAudio.FileName;
 end;
 
-function TDemoWMFMain.GetAudioSampleRate: integer;
+function TDemoWMFMain.GetAudioSampleRate: Integer;
 begin
   Result := StrToInt(SampleRate.Text);
 end;
@@ -826,20 +835,20 @@ begin
   Result := AudioStartTime.Value;
 end;
 
-function TDemoWMFMain.GetDoCrop: boolean;
+function TDemoWMFMain.GetDoCrop: Boolean;
 begin
   Result := CropLandscape.Checked;
 end;
 
-function TDemoWMFMain.GetDoZoomInOut: boolean;
+function TDemoWMFMain.GetDoZoomInOut: Boolean;
 begin
   Result := ZoomInOut.Checked;
 end;
 
 const
-  FrameRateArray: array [0 .. 6] of single = (25, 29.97, 30, 45, 60, 90, 120);
+  FrameRateArray: array [0 .. 6] of Single = (25, 29.97, 30, 45, 60, 90, 120);
 
-function TDemoWMFMain.GetFrameRate: single;
+function TDemoWMFMain.GetFrameRate: Single;
 begin
   Result := FrameRateArray[FrameRates.ItemIndex];
 end;
@@ -850,17 +859,17 @@ begin
     FileExt.Text;
 end;
 
-function TDemoWMFMain.GetQuality: integer;
+function TDemoWMFMain.GetQuality: Integer;
 begin
   Result := SetQuality.Value;
 end;
 
-function TDemoWMFMain.GetVideoHeight: integer;
+function TDemoWMFMain.GetVideoHeight: Integer;
 begin
   Result := StrToInt(Heights.Text);
 end;
 
-function TDemoWMFMain.GetVideoWidth: integer;
+function TDemoWMFMain.GetVideoWidth: Integer;
 begin
   Result := round(Aspect * VideoHeight);
 end;
@@ -946,7 +955,7 @@ begin
   inherited;
   if (AMessage.NotifyCode = LBN_SELCHANGE) then
   begin
-    if assigned(fOnSelChange) then
+    if Assigned(fOnSelChange) then
       fOnSelChange(self);
   end;
 end;

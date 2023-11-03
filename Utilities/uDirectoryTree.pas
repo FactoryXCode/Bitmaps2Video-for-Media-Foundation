@@ -7,13 +7,20 @@ interface
 
 {$WARN SYMBOL_PLATFORM OFF}
 
-uses VCL.ComCtrls, VCL.Controls, System.Classes,
-  System.Types, System.IOUtils, System.SysUtils;
+uses
+
+  VCL.ComCtrls,
+  VCL.Controls,
+  System.Classes,
+  System.Types,
+  System.IOUtils,
+  System.SysUtils;
+
 
 type
   TNodeData = record
     FullPath: string;
-    HasEnoughSubnodes: boolean;
+    HasEnoughSubnodes: Boolean;
   end;
 
   PNodeData = ^TNodeData;
@@ -24,7 +31,7 @@ type
   protected
     procedure Change(Node: TTreeNode); override;
     procedure Delete(Node: TTreeNode); override;
-    function CanExpand(Node: TTreeNode): boolean; override;
+    function CanExpand(Node: TTreeNode): Boolean; override;
   public
     constructor Create(aOwner: TComponent); override;
     destructor Destroy; override;
@@ -36,14 +43,21 @@ type
 
 implementation
 
-uses WinAPI.Windows, WinAPI.ShlWApi;
+uses
+
+  WinAPI.Windows,
+  {$IF COMPILERVERSION < 30.0}
+  {MediaFoundationApi}
+  Winapi.MediaFoundationApi.MfUtils,  // Introduces StrCmpLogicalW
+  {$ENDIF}
+  WinAPI.ShlWApi;
 
 { TDirectoryTree }
 
-function TDirectoryTree.CanExpand(Node: TTreeNode): boolean;
+function TDirectoryTree.CanExpand(Node: TTreeNode): Boolean;
 begin
   inherited;
-  if assigned(Node.Data) then
+  if Assigned(Node.Data) then
   begin
     Result := true;
     CreateSubNodesToLevel2(Node);
@@ -66,7 +80,7 @@ end;
 
 procedure TDirectoryTree.Delete(Node: TTreeNode);
 begin
-  if assigned(Node.Data) then
+  if Assigned(Node.Data) then
   begin
     Finalize(PNodeData(Node.Data)^);
     Dispose(PNodeData(Node.Data));
@@ -76,22 +90,22 @@ begin
 
 end;
 
-destructor TDirectoryTree.Destroy;
+destructor TDirectoryTree.Destroy();
 begin
   inherited;
 end;
 
 procedure TDirectoryTree.CreateSubNodesToLevel2(aItem: TTreeNode);
 var
-  DirArraySize1, DirArraySize2, i, j: integer;
+  DirArraySize1, DirArraySize2, i, j: Integer;
   DirArray1, DirArray2: TStringDynArray;
   TreeItem, TreeItem2: TTreeNode;
   NewName: string;
-  FileAtr: integer;
-  DirectoryCount: integer;
+  FileAtr: Integer;
+  DirectoryCount: Integer;
   NodeData: PNodeData;
 begin
-  if not assigned(aItem.Data) then
+  if not Assigned(aItem.Data) then
     raise Exception.Create('Node has no directory name');
   if PNodeData(aItem.Data).HasEnoughSubnodes then
     exit;
@@ -101,7 +115,7 @@ begin
     FileAtr := faHidden + faSysFile + faSymLink;
     DirectoryCount := 0;
     DirArray1 := TDirectory.GetDirectories(GetFullFolderName(aItem),
-      function(const path: string; const SearchRec: TSearchRec): boolean
+      function(const path: string; const SearchRec: TSearchRec): Boolean
       begin
         Result := (DirectoryCount < 1001) and (SearchRec.Attr and (not FileAtr)
           = SearchRec.Attr);
@@ -133,7 +147,7 @@ begin
         Continue;
       DirectoryCount := 0;
       DirArray2 := TDirectory.GetDirectories(NewName,
-        function(const path: string; const SearchRec: TSearchRec): boolean
+        function(const path: string; const SearchRec: TSearchRec): Boolean
         begin
           Result := (DirectoryCount < 1001) and
             (SearchRec.Attr and (not FileAtr) = SearchRec.Attr);
@@ -171,6 +185,7 @@ var
   Root: TTreeNode;
   ShortName: string;
   NodeData: PNodeData;
+
 begin
   if not System.SysUtils.DirectoryExists(RootFolder) then
     raise Exception.Create(RootFolder + ' does not exist');
@@ -196,21 +211,34 @@ end;
 
 function TDirectoryTree.GetFullFolderName(aNode: TTreeNode): string;
 begin
-  if not assigned(aNode.Data) then
+  if not Assigned(aNode.Data) then
     raise Exception.Create('Node has no directory name');
   Result := PNodeData(aNode.Data).FullPath;
 end;
 
-function LogicalCompare(List: TStringlist; Index1, Index2: integer): integer;
+function LogicalCompare(List: TStringlist; Index1, Index2: Integer): Integer;
 begin
   Result := StrCmpLogicalW(PWideChar(List[Index1]), PWideChar(List[Index2]));
 end;
 
+
 procedure TDirectoryTree.GetAllFiles(const aStringList: TStringlist;
-const aFileMask: string);
+                                     const aFileMask: string);
+
 var
-  FilePath, mask, SearchStr: string;
-  MaskLen, MaskPos, SepPos: integer;
+  FilePath,
+  mask,
+  SearchStr: string;
+  MaskLen,
+  MaskPos,
+  SepPos: Integer;
+
+{$IF COMPILERVERSION < 30.0}
+  i: Integer;
+  Strings: TArray<string>;
+  ClassicStrings: TStringDynArray;
+{$ENDIF}
+
 begin
   FilePath := IncludeTrailingBackSlash(GetFullFolderName(Selected));
   Assert(Assigned(aStringList));
@@ -219,23 +247,53 @@ begin
   MaskLen := Length(mask);
   MaskPos := 0;
 
-  while MaskPos >= 0 do
-  begin
-    SepPos := Pos(';', mask, MaskPos + 1) - 1;
-    if SepPos >= 0 then
-      SearchStr := Copy(mask, MaskPos + 1, SepPos - MaskPos)
-    else
-      SearchStr := Copy(mask, MaskPos + 1, MaskLen);
-
-    aStringList.AddStrings(TDirectory.GetFiles(FilePath, SearchStr,
-      TSearchOption.soTopDirectoryOnly));
-
-    if SepPos >= 0 then
+  while (MaskPos >= 0) do
     begin
-      inc(SepPos);
-      if SepPos >= MaskLen then
-        SepPos := -1;
-    end;
+      SepPos := Pos(';',
+                    mask,
+                    MaskPos + 1) - 1;
+
+      if (SepPos >= 0) then
+        SearchStr := Copy(mask,
+                          MaskPos + 1,
+                          SepPos - MaskPos)
+    else
+      SearchStr := Copy(mask,
+                        MaskPos + 1,
+                        MaskLen);
+
+
+{$IF COMPILERVERSION > 34.0}  {Delphi 10.4 Sydney}
+    aStringList.AddStrings(TDirectory.GetFiles(FilePath,
+                                               SearchStr,
+                                               TSearchOption.soTopDirectoryOnly));
+{$ELSE}
+    ClassicStrings := TDirectory.GetFiles(FilePath,
+                                          SearchStr,
+                                          TSearchOption.soTopDirectoryOnly);
+
+    if (Length(ClassicStrings) > 0) then
+      begin
+        SetLength(Strings,
+                  Length(ClassicStrings));
+        // Copy all fields to the new array
+        for i := 0 to Length(ClassicStrings) -1 do
+          Strings[i] := ClassicStrings[i];
+
+        aStringList.AddStrings(Strings);
+      end;
+
+  SetLength(ClassicStrings,
+            0);
+  ClassicStrings := nil;
+{$ENDIF}
+
+    if (SepPos >= 0) then
+      begin
+        inc(SepPos);
+        if (SepPos >= MaskLen) then
+          SepPos := -1;
+      end;
     MaskPos := SepPos;
   end;
 

@@ -60,8 +60,8 @@ type
   /// <param name="Parallel"> If true the resampling work is divided into parallel threads. </param>
   /// <param name="AlphaCombineMode"> Options for alpha: amIndependent, amPreMultiply, amIgnore, amTransparentColor </param>
   /// <param name="ThreadPool"> Pointer to the TResamplingThreadpool to be used, nil uses a default thread pool. </param>
-procedure Resample(NewWidth, NewHeight: integer; const Source, Target: TBitmap;
-  Filter: TFilter; Radius: single; Parallel: boolean;
+procedure Resample(NewWidth, NewHeight: Integer; const Source, Target: TBitmap;
+  Filter: TFilter; Radius: Single; Parallel: Boolean;
   AlphaCombineMode: TAlphaCombineMode; ThreadPool: PResamplingThreadPool = nil);
 
 /// <summary> Resamples a rectangle of the Source to the Target. Does not use threading. </summary>
@@ -73,9 +73,9 @@ procedure Resample(NewWidth, NewHeight: integer; const Source, Target: TBitmap;
 /// <param name="Filter"> Resampling kernel: cfBox, cfBilinear, cfBicubic, cfLanczos </param>
 /// <param name="Radius"> Range of pixels to contribute to the result. Value 0 takes the default radius for the filter. </param>
 /// <param name="AlphaCombineMode"> Options for alpha: amIndependent, amPreMultiply, amIgnore, amTransparentColor </param>
-procedure ZoomResample(NewWidth, NewHeight: integer;
+procedure ZoomResample(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode);
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode);
 
 // The following routine is now threadsafe, if each concurrent thread uses a different thread pool
 
@@ -89,9 +89,9 @@ procedure ZoomResample(NewWidth, NewHeight: integer;
 /// <param name="Radius"> Range of pixels to contribute to the result. Value 0 takes the default radius for the filter. </param>
 /// <param name="AlphaCombineMode"> Options for alpha: amIndependent, amPreMultiply, amIgnore, amTransparentColor </param>
 /// <param name="ThreadPool"> Pointer to the TResamplingThreadpool to be used, nil uses a default thread pool</param>
-procedure ZoomResampleParallelThreads(NewWidth, NewHeight: integer;
+procedure ZoomResampleParallelThreads(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode;
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode;
   ThreadPool: PResamplingThreadPool = nil);
 
 // The following procedure allows you to compare performance of TResamplingThreads to
@@ -109,17 +109,24 @@ procedure ZoomResampleParallelThreads(NewWidth, NewHeight: integer;
 /// <param name="Filter"> Resampling kernel: cfBox, cfBilinear, cfBicubic, cfLanczos </param>
 /// <param name="Radius"> Range of pixels to contribute to the result. Value 0 takes the default radius for the filter. </param>
 /// <param name="AlphaCombineMode"> Options for alpha: amIndependent, amPreMultiply, amIgnore, amTransparentColor </param>
-procedure ZoomResampleParallelTasks(NewWidth, NewHeight: integer;
+procedure ZoomResampleParallelTasks(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode);
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode);
 
-function FloatRect(Aleft, ATop, ARight, ABottom: double): TFloatRect;
+function FloatRect(Aleft, ATop, ARight, ABottom: Double): TFloatRect;
   overload; inline;
+
 function FloatRect(ARect: TRect): TFloatRect; overload; inline;
+
+function GetResamplingTask({const} RTS: TResamplingThreadSetup;
+                           Index: Integer;
+                           AlphaCombineMode: TAlphaCombineMode): TProc;
 
 implementation
 
-function FloatRect(Aleft, ATop, ARight, ABottom: double): TFloatRect;
+
+
+function FloatRect(Aleft, ATop, ARight, ABottom: Double): TFloatRect;
   overload; inline;
 begin
   Result.Left := Aleft;
@@ -133,12 +140,13 @@ begin
   Result := TRectF(ARect);
 end;
 
-function GetResamplingTask(const RTS: TResamplingThreadSetup; Index: integer;
-  AlphaCombineMode: TAlphaCombineMode): TProc;
+function GetResamplingTask({const} RTS: TResamplingThreadSetup;
+                           Index: Integer;
+                           AlphaCombineMode: TAlphaCombineMode): TProc;
 begin
   Result := procedure
     var
-      y, ymin, ymax: integer;
+      y, ymin, ymax: Integer;
       CacheStart: PBGRAInt;
     begin
       CacheStart:=@RTS.CacheMatrix[Index][0];
@@ -158,8 +166,8 @@ var
   pix: PRGBQuad;
   pixColor: TRgbTriple;
   TransColor: TColor;
-  bps, x, y: integer;
-  function SameColor(p1, p2: PRGBTriple): boolean;
+  bps, x, y: Integer;
+  function SameColor(p1, p2: PRGBTriple): Boolean;
   begin
     Result := (p1.rgbtBlue = p2.rgbtBlue) and (p1.rgbtGreen = p2.rgbtGreen) and
       (p1.rgbtRed = p2.rgbtRed);
@@ -197,7 +205,7 @@ var
   row: PByte;
   pix: PRGBQuad;
   pixColor: TRgbTriple;
-  bps, x, y: integer;
+  bps, x, y: Integer;
   c: TColor;
 begin
   c := ColorToRGB(TransColor);
@@ -236,17 +244,17 @@ begin
   Target.Canvas.Unlock;
 end;
 
-procedure ZoomResampleParallelThreads(NewWidth, NewHeight: integer;
+procedure ZoomResampleParallelThreads(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode;
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode;
   ThreadPool: PResamplingThreadPool = nil);
 var
   RTS: TResamplingThreadSetup;
-  Index: integer;
+  Index: Integer;
   TP: PResamplingThreadPool;
   TransColor: TColor;
-  DoSetAlphaFormat: boolean;
-  Sbps, Tbps: integer;
+  DoSetAlphaFormat: Boolean;
+  Sbps, Tbps: Integer;
 begin
   if Radius = 0 then
     Radius := DefaultRadius[Filter];
@@ -296,17 +304,17 @@ begin
   end;
 end;
 
-procedure ZoomResampleParallelTasks(NewWidth, NewHeight: integer;
+procedure ZoomResampleParallelTasks(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode);
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode);
 var
   RTS: TResamplingThreadSetup;
-  Index: integer;
+  Index: Integer;
   TransColor: TColor;
-  DoSetAlphaFormat: boolean;
-  MaxTasks: integer;
+  DoSetAlphaFormat: Boolean;
+  MaxTasks: Integer;
   ResamplingTasks: array of iTask;
-  Sbps, Tbps: integer;
+  Sbps, Tbps: Integer;
 begin
   if Radius = 0 then
     Radius := DefaultRadius[Filter];
@@ -344,18 +352,18 @@ begin
   end;
 end;
 
-procedure ZoomResample(NewWidth, NewHeight: integer;
+procedure ZoomResample(NewWidth, NewHeight: Integer;
   const Source, Target: TBitmap; SourceRect: TFloatRect; Filter: TFilter;
-  Radius: single; AlphaCombineMode: TAlphaCombineMode);
+  Radius: Single; AlphaCombineMode: TAlphaCombineMode);
 var
-  OldWidth, OldHeight: integer;
-  Sbps, Tbps: integer;
+  OldWidth, OldHeight: Integer;
+  Sbps, Tbps: Integer;
   rStart, rTStart: PByte;
   // Row start in Source, Target
-  y: integer;
+  y: Integer;
   CacheStart: PBGRAInt;
   TransColor: TColor;
-  DoSetAlphaFormat: boolean;
+  DoSetAlphaFormat: Boolean;
   RTS: TResamplingThreadSetup;
 begin
   if Radius = 0 then
@@ -397,8 +405,8 @@ begin
   end;
 end;
 
-procedure Resample(NewWidth, NewHeight: integer; const Source, Target: TBitmap;
-  Filter: TFilter; Radius: single; Parallel: boolean;
+procedure Resample(NewWidth, NewHeight: Integer; const Source, Target: TBitmap;
+  Filter: TFilter; Radius: Single; Parallel: Boolean;
   AlphaCombineMode: TAlphaCombineMode; ThreadPool: PResamplingThreadPool = nil);
 var
   r: TFloatRect;

@@ -17,10 +17,10 @@ implementation
 procedure WICToBmp(const aWic: TWICImage; const bmp: TBitmap);
 var
   LWicBitmap: IWICBitmapSource;
-  Stride: integer;
+  Stride: Integer;
   Buffer: array of byte;
   BitmapInfo: TBitmapInfo;
-  w, h: integer;
+  w, h: Integer;
 begin
   w := aWic.Width;
   h := aWic.Height;

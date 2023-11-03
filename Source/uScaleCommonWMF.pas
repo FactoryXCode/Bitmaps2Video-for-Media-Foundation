@@ -50,7 +50,7 @@ type
 
 const
   // Default radii for the filters, can be made a tad smaller for performance
-  DefaultRadius: array [TFilter] of single = (0.5, 1, 2, 2, 3, 2);
+  DefaultRadius: array [TFilter] of Single = (0.5, 1, 2, 2, 3, 2);
 
 type
   // happens right now, if you use a custom thread pool which has not been initialized
@@ -94,17 +94,17 @@ type
   // pool should be used. This way the procedure can be used in concurrent threads.
   TResamplingThreadPool = record
   private
-    fInitialized: boolean;
-    fThreadCount: integer;
+    fInitialized: Boolean;
+    fThreadCount: Integer;
     fResamplingThreads: TThreadArray;
   public
     property ResamplingThreads: TThreadArray read fResamplingThreads;
     /// <summary> Creates the threads. Call before you use it in parallel procedures. If already initialized, it will finalize first, don't call it unnecessarily. </summary>
-    procedure Initialize(aMaxThreadCount: integer; aPriority: TThreadpriority);
+    procedure Initialize(aMaxThreadCount: Integer; aPriority: TThreadpriority);
     /// <summary> Frees the threads. Call when your code exits the part where you use parallel resampling to free up memory and CPU-time. If you don't finalize a custom threadpool, you will have a memory leak. </summary>
     procedure Finalize;
-    property Initialized: boolean read fInitialized;
-    property ThreadCount: integer read fThreadCount;
+    property Initialized: Boolean read fInitialized;
+    property ThreadCount: Integer read fThreadCount;
   end;
 
   PResamplingThreadPool = ^TResamplingThreadPool;
@@ -116,7 +116,7 @@ type
   PBGRA = ^TBGRA;
 
   TBGRAInt = record
-    b, g, r, a: integer;
+    b, g, r, a: Integer;
   end;
 
   PBGRAInt = ^TBGRAInt;
@@ -125,42 +125,42 @@ type
 
   TCacheMatrix = array of TBGRAIntArray;
 
-  TIntArray = array of integer;
+  TIntArray = array of Integer;
 
   TContributor = record
-    Min, High: integer;
+    Min, High: Integer;
     // Min: start source pixel
     // High+1: number of source pixels to contribute to the result
-    Weights: array of integer; // floats scaled by $100  or $800
+    Weights: array of Integer; // floats scaled by $100  or $800
   end;
 
   TContribArray = array of TContributor;
 
   TResamplingThreadSetup = record
-    Tbps, Sbps: integer; // pitch (bytes per scanline) in Target/Source. Negative for VCL-TBitmap
+    Tbps, Sbps: Integer; // pitch (bytes per scanline) in Target/Source. Negative for VCL-TBitmap
     ContribsX, ContribsY: TContribArray; // contributors horizontal/vertical
     rStart, rTStart: PByte; // Scanline for row 0
-    xmin, xmax: integer;
-    ThreadCount: integer;
-    xminSource, xmaxSource: integer;
+    xmin, xmax: Integer;
+    ThreadCount: Integer;
+    xminSource, xmaxSource: Integer;
     ymin, ymax: TIntArray;  //ymin,ymax for each thread
     CacheMatrix: TCacheMatrix; // Cache for result of vertical pass, 1 array for each thread.
     procedure PrepareResamplingThreads(NewWidth, NewHeight, OldWidth,
-      OldHeight: integer; Radius: single; Filter: TFilter; SourceRect: TRectF;
-      AlphaCombineMode: TAlphaCombineMode; aMaxThreadCount: integer;
-      SourcePitch, TargetPitch: integer; SourceStart, TargetStart: PByte);
+      OldHeight: Integer; Radius: Single; Filter: TFilter; SourceRect: TRectF;
+      AlphaCombineMode: TAlphaCombineMode; aMaxThreadCount: Integer;
+      SourcePitch, TargetPitch: Integer; SourceStart, TargetStart: PByte);
   end;
 
   PResamplingThreadSetup = ^TResamplingThreadSetup;
 
 var
   _DefaultThreadPool: TResamplingThreadPool;
-  _IsFMX: boolean; //value is set in initialization of uScale and uScaleFMX
+  _IsFMX: Boolean; //value is set in initialization of uScale and uScaleFMX
 
 const
   // constants used to divide the work for threading
-  _ChunkHeight: integer = 8;
-  _MaxThreadCount: integer = 64;
+  _ChunkHeight: Integer = 8;
+  _MaxThreadCount: Integer = 64;
 
   /// <summary> Initializes the default resampling thread pool. If already initialized, it does nothing. If not called, the default pool is initialized at the first use of a parallel procedure, causing a delay. </summary>
 procedure InitDefaultResamplingThreads;
@@ -168,13 +168,13 @@ procedure InitDefaultResamplingThreads;
 /// <summary> Frees the default resampling threads. If they are initialized and not finalized the Finalization of uScale(FMX) will do it. </summary>
 procedure FinalizeDefaultResamplingThreads;
 
-procedure ProcessRow(y: integer; CacheStart: PBGRAInt;
+procedure ProcessRow(y: Integer; CacheStart: PBGRAInt;
   const RTS: TResamplingThreadSetup; AlphaCombineMode: TAlphaCombineMode); inline;
 
 implementation
 
 type
-  TFilterFunction = function(x: double): double;
+  TFilterFunction = function(x: Double): Double;
 
   TPrecision = (prLow, prHigh);
 
@@ -182,7 +182,7 @@ type
   // They actually never get inlined, because
   // MakeContributors uses a procedural variable,
   // but their use is not in a time-critical spot.
-function Box(x: double): double; inline;
+function Box(x: Double): Double; inline;
 begin
   x := abs(x);
   if x > 1 then
@@ -191,7 +191,7 @@ begin
     Result := 0.5;
 end;
 
-function Linear(x: double): double; inline;
+function Linear(x: Double): Double; inline;
 begin
   x := abs(x);
   if x < 1 then
@@ -200,7 +200,7 @@ begin
     Result := 0;
 end;
 
-function BSpline(x: double): double; inline;
+function BSpline(x: Double): Double; inline;
 begin
   x := abs(x);
   if x < 0.5 then
@@ -220,7 +220,7 @@ const
   cc = 1 / 3 * alpha * (1 + 2 * beta2);
   dd = -alpha * beta2;
 
-function Mine(x: double): double; inline;
+function Mine(x: Double): Double; inline;
 begin
   x := abs(x);
   if x > 1 then
@@ -233,7 +233,7 @@ end;
 const
   ac = -2;
 
-function Bicubic(x: double): double; inline;
+function Bicubic(x: Double): Double; inline;
 begin
   x := abs(x);
   if x < 1 / 2 then
@@ -244,9 +244,9 @@ begin
     Result := 0;
 end;
 
-function Lanczos(x: double): double; inline;
+function Lanczos(x: Double): Double; inline;
 var
-  y, yinv: double;
+  y, yinv: Double;
 begin
   x := abs(x);
   if x = 0 then
@@ -265,23 +265,23 @@ const
   FilterFunctions: array [TFilter] of TFilterFunction = (Box, Linear, Bicubic,
     Mine, Lanczos, BSpline);
 
-  PrecisionFacts: array [TPrecision] of integer = ($100, $800);
+  PrecisionFacts: array [TPrecision] of Integer = ($100, $800);
   PreMultPrecision = 1 shl 2;
 
   PointCount = 18; // 6 would be Simpson's rule, but I like emphasis on midpoint
   PointCountMinus2 = PointCount - 2;
   PointCountInv = 1 / PointCount;
 
-procedure MakeContributors(r: single; SourceSize, TargetSize: integer;
-  SourceStart, SourceFloatwidth: double; Filter: TFilter; precision: TPrecision;
+procedure MakeContributors(r: Single; SourceSize, TargetSize: Integer;
+  SourceStart, SourceFloatwidth: Double; Filter: TFilter; precision: TPrecision;
   var Contribs: TContribArray);
 // r: Filterradius
 var
-  xCenter, scale, rr: double;
-  x, j: integer;
-  x1, x2, x0, x3, delta, dw: double;
-  TrueMin, TrueMax, Mx, prec: integer;
-  sum, ds: integer;
+  xCenter, scale, rr: Double;
+  x, j: Integer;
+  x1, x2, x0, x3, delta, dw: Double;
+  TrueMin, TrueMax, Mx, prec: Integer;
+  sum, ds: Integer;
   FT: TFilterFunction;
 begin
   if SourceFloatwidth = 0 then
@@ -334,7 +334,7 @@ begin
         // PointCount=6 would be Simpson's rule.
         dw := PointCountInv * (x2 - x1) *
           (FT(x1) + FT(x2) + PointCountMinus2 * FT(x3));
-        // scale float to integer, integer=prec corresponds to float=1
+        // scale float to Integer, Integer=prec corresponds to float=1
         Weights[j] := round(prec * dw);
         x0 := x0 + delta;
         sum := sum + Weights[j];
@@ -378,10 +378,10 @@ end;
 
 
 
-procedure Combine(const ps: PBGRA; const Weight: integer; const Cache: PBGRAInt;
+procedure Combine(const ps: PBGRA; const Weight: Integer; const Cache: PBGRAInt;
   const acm: TAlphaCombineMode); inline;
 var
-  alpha: integer;
+  alpha: Integer;
 begin
   if acm in [amIndependent, amIgnore] then
   begin
@@ -406,10 +406,10 @@ begin
   end;
 end;
 
-procedure Increase(const ps: PBGRA; const Weight: integer;
+procedure Increase(const ps: PBGRA; const Weight: Integer;
   const Cache: PBGRAInt; const acm: TAlphaCombineMode); inline;
 var
-  alpha: integer;
+  alpha: Integer;
 begin
   if acm in [amIndependent, amIgnore] then
   begin
@@ -429,7 +429,7 @@ begin
   end;
 end;
 
-procedure InitTotal(const Cache: PBGRAInt; const Weight: integer;
+procedure InitTotal(const Cache: PBGRAInt; const Weight: Integer;
   var Total: TBGRAInt; const acm: TAlphaCombineMode); inline;
 begin
   if acm in [amIndependent, amIgnore] then
@@ -451,7 +451,7 @@ begin
     Total := Default (TBGRAInt);
 end;
 
-procedure IncreaseTotal(const Cache: PBGRAInt; const Weight: integer;
+procedure IncreaseTotal(const Cache: PBGRAInt; const Weight: Integer;
   var Total: TBGRAInt; const acm: TAlphaCombineMode); inline;
 begin
   if acm in [amIndependent, amIgnore] then
@@ -504,18 +504,18 @@ begin
     pT^ := Default (TBGRA);
 end;
 
-procedure ProcessRow(y: integer; CacheStart: PBGRAInt;
+procedure ProcessRow(y: Integer; CacheStart: PBGRAInt;
   const RTS: TResamplingThreadSetup; AlphaCombineMode: TAlphaCombineMode); inline;
 var
   ps, pT: PBGRA;
   rs, rT: PByte;
-  x, i, j: integer;
-  highx, highy, minx, miny: integer;
+  x, i, j: Integer;
+  highx, highy, minx, miny: Integer;
   Weightx, Weighty: PInteger;
-  Weight: integer;
+  Weight: Integer;
   Total: TBGRAInt;
   run: PBGRAInt;
-  jump: integer;
+  jump: Integer;
 begin
   miny := RTS.ContribsY[y].Min;
   highy := RTS.ContribsY[y].High;
@@ -610,14 +610,14 @@ const
     prHigh, prLow);
 
 procedure TResamplingThreadSetup.PrepareResamplingThreads(NewWidth, NewHeight,
-  OldWidth, OldHeight: integer; Radius: single; Filter: TFilter;
+  OldWidth, OldHeight: Integer; Radius: Single; Filter: TFilter;
   SourceRect: TRectF; AlphaCombineMode: TAlphaCombineMode;
-  aMaxThreadCount: integer; SourcePitch, TargetPitch: integer;
+  aMaxThreadCount: Integer; SourcePitch, TargetPitch: Integer;
   SourceStart, TargetStart: PByte);
 var
-  yChunkCount: integer;
-  yChunk: integer;
-  j, Index: integer;
+  yChunkCount: Integer;
+  yChunk: Integer;
+  j, Index: Integer;
 begin
 
   Tbps := TargetPitch;
@@ -707,7 +707,7 @@ end;
 { TResamplingThreadPool }
 
 procedure TResamplingThreadPool.Finalize;
-var i: integer;
+var i: Integer;
 begin
   if not Initialized then
     exit;
@@ -723,9 +723,9 @@ begin
   fInitialized := false;
 end;
 
-procedure TResamplingThreadPool.Initialize(aMaxThreadCount: integer;
+procedure TResamplingThreadPool.Initialize(aMaxThreadCount: Integer;
   aPriority: TThreadpriority);
-var i: integer;
+var i: Integer;
 begin
   if Initialized then
     Finalize;
