@@ -57,7 +57,7 @@ type
   /// <param name="Target"> Target bitmap, will be set to pf32bit. Alphaformat will be = Source.Alphaformat. </param>
   /// <param name="Filter"> Resampling kernel: cfBox, cfBilinear, cfBicubic, cfLanczos </param>
   /// <param name="Radius"> Range of pixels to contribute to the result. Value 0 takes the default radius for the filter. </param>
-  /// <param name="Parallel"> If true the resampling work is divided into parallel threads. </param>
+  /// <param name="Parallel"> If True the resampling work is divided into parallel threads. </param>
   /// <param name="AlphaCombineMode"> Options for alpha: amIndependent, amPreMultiply, amIgnore, amTransparentColor </param>
   /// <param name="ThreadPool"> Pointer to the TResamplingThreadpool to be used, nil uses a default thread pool. </param>
 procedure Resample(NewWidth, NewHeight: Integer; const Source, Target: TBitmap;
@@ -427,7 +427,7 @@ end;
 
 initialization
 
-_IsFMX:=false;
+_IsFMX:=False;
 
 finalization
 

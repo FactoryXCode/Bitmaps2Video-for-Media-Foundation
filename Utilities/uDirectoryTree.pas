@@ -59,11 +59,11 @@ begin
   inherited;
   if Assigned(Node.Data) then
   begin
-    Result := true;
+    Result := True;
     CreateSubNodesToLevel2(Node);
   end
   else
-    Result := false;
+    Result := False;
 end;
 
 procedure TDirectoryTree.Change(Node: TTreeNode);
@@ -75,7 +75,7 @@ end;
 constructor TDirectoryTree.Create(aOwner: TComponent);
 begin
   inherited;
-  ReadOnly := true;
+  ReadOnly := True;
 end;
 
 procedure TDirectoryTree.Delete(Node: TTreeNode);
@@ -111,7 +111,7 @@ begin
     exit;
   Items.BeginUpdate;
   try
-    PNodeData(aItem.Data).HasEnoughSubnodes := false;
+    PNodeData(aItem.Data).HasEnoughSubnodes := False;
     FileAtr := faHidden + faSysFile + faSymLink;
     DirectoryCount := 0;
     DirArray1 := TDirectory.GetDirectories(GetFullFolderName(aItem),
@@ -126,7 +126,7 @@ begin
     // ignore directories with more than 1000 entries
     if (DirArraySize1 < 1) or (DirArraySize1 > 1000) then
     begin
-      PNodeData(aItem.Data).HasEnoughSubnodes := true;
+      PNodeData(aItem.Data).HasEnoughSubnodes := True;
       exit;
     end;
     for i := 0 to DirArraySize1 - 1 do
@@ -136,7 +136,7 @@ begin
       begin
         New(NodeData);
         NodeData.FullPath := NewName;
-        NodeData.HasEnoughSubnodes := false;
+        NodeData.HasEnoughSubnodes := False;
         TreeItem := Items.AddChild(aItem, ExtractFilename(NewName));
         TreeItem.Data := NodeData;
         TreeItem.ImageIndex := 0;
@@ -158,7 +158,7 @@ begin
       if (DirArraySize2 < 1) or (DirArraySize2 > 1000) then
       begin
         // Don't expand a folder with more than 1000 subfolders any futher
-        PNodeData(TreeItem.Data).HasEnoughSubnodes := true;
+        PNodeData(TreeItem.Data).HasEnoughSubnodes := True;
         Continue;
       end;
       for j := 0 to DirArraySize2 - 1 do
@@ -168,13 +168,13 @@ begin
           TreeItem2 := Items.AddChild(TreeItem, ExtractFilename(DirArray2[j]));
           New(NodeData);
           NodeData.FullPath := DirArray2[j];
-          NodeData.HasEnoughSubnodes := false;
+          NodeData.HasEnoughSubnodes := False;
           TreeItem2.Data := NodeData;
           TreeItem2.ImageIndex := 0;
         end;
       end;
     end;
-    PNodeData(aItem.Data).HasEnoughSubnodes := true;
+    PNodeData(aItem.Data).HasEnoughSubnodes := True;
   finally
     Items.EndUpdate;
   end;
@@ -198,15 +198,15 @@ begin
     Root := Items.AddChild(nil, ShortName);
     New(NodeData);
     NodeData.FullPath := RootFolder;
-    NodeData.HasEnoughSubnodes := false;
+    NodeData.HasEnoughSubnodes := False;
     Root.Data := NodeData;
     Root.ImageIndex := 0;
     CreateSubNodesToLevel2(Root);
   finally
     Items.EndUpdate;
   end;
-  Root.Expand(false);
-  Root.Selected := true;
+  Root.Expand(False);
+  Root.Selected := True;
 end;
 
 function TDirectoryTree.GetFullFolderName(aNode: TTreeNode): string;

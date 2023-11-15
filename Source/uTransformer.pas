@@ -66,7 +66,7 @@ type
   TVideoInfo = record
     Codec: TGUID;
     CodecName: string;
-    Duration: int64;
+    Duration: Int64;
     VideoWidth, VideoHeight: DWord;
     FrameRate: Single;
     PixelAspect: Single;
@@ -91,9 +91,9 @@ type
     constructor Create(const InputFile: string; NewHeight: DWord;
       NewFrameRate: Single);
     procedure NextValidSampleToBitmap(const bm: TBitmap;
-      out Timestamp, Duration: int64);
+      out Timestamp, Duration: Int64);
     procedure GetNextValidSample(out pSample: IMFSample;
-      out Timestamp, Duration: int64);
+      out Timestamp, Duration: Int64);
     destructor Destroy; override;
     property NewVideoWidth: DWord read fNewWidth;
     property NewVideoHeight: DWord read fNewHeight;
@@ -162,7 +162,7 @@ begin
 
     CheckFail(MFCreateAttributes(attribs, 1));
     CheckFail(attribs.SetUInt32(MF_SOURCE_READER_ENABLE_VIDEO_PROCESSING,
-      UInt32(true)));
+      UInt32(True)));
     // Create a sourcereader for the video file
     CheckFail(MFCreateSourceReaderFromURL(PWideChar(VideoFileName), attribs,
       pReader));
@@ -264,7 +264,7 @@ begin
       if GUID = MFMediaType_Audio then
         inc(Result.AudioStreamCount);
       inc(AudioStreamNo);
-    until false;
+    until False;
   finally
     if succeeded(hrStartup) then
       MFShutdown();
@@ -279,9 +279,9 @@ var
   VT: TVideoTransformer;
   FrameCount: DWord;
   pSample: IMFSample;
-  Timestamp, Duration: int64;
+  Timestamp, Duration: Int64;
 begin
-  Result := false;
+  Result := False;
   VT := TVideoTransformer.Create(VideoFileName, bmHeight, 0);
   try
     FrameCount := 0;
@@ -293,7 +293,7 @@ begin
     if not VT.EndOfFile then
     begin
       VT.NextValidSampleToBitmap(bm, Timestamp, Duration);
-      Result := true;
+      Result := True;
     end;
 
   finally
@@ -347,10 +347,10 @@ begin
 
     // Enable the source-reader to make color-conversion, change video size, frame-rate and interlace-mode
     CheckFail(attribs.SetUInt32
-      (MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, UInt32(true)));
+      (MF_SOURCE_READER_ENABLE_ADVANCED_VIDEO_PROCESSING, UInt32(True)));
     // The next causes problems for some video formats
     // CheckFail(attribs.SetUInt32
-    // (MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, UInt32(true)));
+    // (MF_READWRITE_ENABLE_HARDWARE_TRANSFORMS, UInt32(True)));
     // Create a sourcereader for the video file
     CheckFail(MFCreateSourceReaderFromURL(PWideChar(fInputFile), attribs,
       pReader));
@@ -375,11 +375,11 @@ begin
     CheckFail(pReader.GetCurrentMediaType(MF_SOURCE_READER_FIRST_VIDEO_STREAM,
       pMediaTypeOut));
     // Prevent memory leak
-    CheckFail(pReader.SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, false));
+    CheckFail(pReader.SetStreamSelection(MF_SOURCE_READER_ALL_STREAMS, False));
     // Ensure the stream is selected.
     CheckFail(pReader.SetStreamSelection
-      (MF_SOURCE_READER_FIRST_VIDEO_STREAM, true));
-    fEndOfFile := false;
+      (MF_SOURCE_READER_FIRST_VIDEO_STREAM, True));
+    fEndOfFile := False;
   except
     raise eVideoFormatException.Create
       ('Video format of input file not supported.');
@@ -395,7 +395,7 @@ begin
 end;
 
 procedure TVideoTransformer.GetNextValidSample(out pSample: IMFSample;
-  out Timestamp, Duration: int64);
+  out Timestamp, Duration: Int64);
 var
   Count: Integer;
   pSampleLoc: IMFSample;
@@ -431,14 +431,14 @@ begin
       continue;
     // To be on the safe side we check all flags for which
     // further reading would not make any sense
-    // and set EndOfFile to true
+    // and set EndOfFile to True
     if ((Flags and MF_SOURCE_READERF_ENDOFSTREAM) <> 0) or
       ((Flags and MF_SOURCE_READERF_ERROR) <> 0) or
       ((Flags and MF_SOURCE_READERF_NEWSTREAM) <> 0) or
       ((Flags and MF_SOURCE_READERF_NATIVEMEDIATYPECHANGED) <> 0) or
       ((Flags and MF_SOURCE_READERF_ALLEFFECTSREMOVED) <> 0) then
     begin
-      fEndOfFile := true;
+      fEndOfFile := True;
       break;
     end;
     if pSampleLoc <> nil then
@@ -451,21 +451,21 @@ begin
         hr := pSample.GetSampleDuration(Duration);
       // fVideoInfo.Duration can return the wrong value!
       // if Timestamp + Duration >= fVideoInfo.Duration then
-      // fEndOfFile := true;
+      // fEndOfFile := True;
       if Failed(hr) then
       begin
-        fEndOfFile := true;
+        fEndOfFile := True;
         pSample := nil;
       end;
       break;
       sleep(0);
     end;
     // Can it happen that we get an infinite loop here?
-  Until false;
+  Until False;
 end;
 
 procedure TVideoTransformer.NextValidSampleToBitmap(const bm: TBitmap;
-  out Timestamp, Duration: int64);
+  out Timestamp, Duration: Int64);
 var
   Count: Integer;
   pSample: IMFSample;

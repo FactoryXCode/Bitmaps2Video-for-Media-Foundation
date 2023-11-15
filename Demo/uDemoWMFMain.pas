@@ -186,11 +186,11 @@ type
     function GetQuality: Integer;
     function GetAudioBitRate: Integer;
     function GetAudioSampleRate: Integer;
-    function GetAudioStart: int64;
+    function GetAudioStart: Int64;
     function GetAudioDialog: Boolean;
     procedure FileBoxSelChange(Sender: TObject);
     procedure TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-      VideoTime: int64; var DoAbort: Boolean);
+      VideoTime: Int64; var DoAbort: Boolean);
     procedure DisplayVideoInfo(const aMemo: TMemo; const VideoInfo: TVideoInfo);
     { Private-Deklarationen }
   public
@@ -207,7 +207,7 @@ type
     property AudioFile: string read GetAudioFile;
     property AudioSampleRate: Integer read GetAudioSampleRate;
     property AudioBitRate: Integer read GetAudioBitRate;
-    property AudioStart: int64 read GetAudioStart;
+    property AudioStart: Int64 read GetAudioStart;
     property AudioDialog: Boolean read GetAudioDialog;
     { Public-Deklarationen }
   end;
@@ -232,16 +232,16 @@ function PidlFree(var IdList: PItemIDList): Boolean;
 var
   Malloc: IMalloc;
 begin
-  Result := false;
+  Result := False;
   if IdList = nil then
-    Result := true
+    Result := True
   else
   begin
     if Succeeded(SHGetMalloc(Malloc)) and (Malloc.DidAlloc(IdList) > 0) then
     begin
       Malloc.Free(IdList);
       IdList := nil;
-      Result := true;
+      Result := True;
     end;
   end;
 end;
@@ -289,7 +289,7 @@ begin
     ShowMessage('Encoding in progress, wait until finished.');
     exit;
   end;
-  fWriting := true;
+  fWriting := True;
   try
     h := VideoHeight;
     w := VideoWidth;
@@ -330,7 +330,7 @@ begin
           bm.Canvas.Fillrect(bm.Canvas.clipRect);
           bm.Canvas.PolyLine(points);
 
-          bme.AddFrame(bm, false);
+          bme.AddFrame(bm, False);
 
           Status.Caption := 'Frame ' + (i + 1).ToString;
           Status.Repaint;
@@ -339,7 +339,7 @@ begin
             pre := TBitmap.Create;
             try
               uScaleWMF.Resample(Preview.Width, Preview.Height, bm, pre,
-                cfBilinear, 0, true, amIgnore);
+                cfBilinear, 0, True, amIgnore);
               BitBlt(Preview.Canvas.Handle, 0, 0, pre.Width, pre.Height,
                 pre.Canvas.Handle, 0, 0, SRCCopy);
             finally
@@ -360,7 +360,7 @@ begin
       bme.Free;
     end;
   finally
-    fWriting := false;
+    fWriting := False;
   end;
 end;
 
@@ -422,7 +422,7 @@ begin
     if not threaded then
       Application.ProcessMessages;
   end;
-  Done := true;
+  Done := True;
 end;
 
 procedure TDemoWMFMain.ShowVideoClick(Sender: TObject);
@@ -453,7 +453,7 @@ begin
   af := '';
   if AudioDialog then
     af := AudioFile;
-  fWriting := true;
+  fWriting := True;
   // Use a local stringlist because of threading
   sl := TStringlist.Create;
   try
@@ -493,11 +493,11 @@ begin
       bme.TimingDebug := DebugTiming.Checked;
       if Background.Checked then
       begin
-        Done := false;
+        Done := False;
         task := TTask.Run(
           procedure
           begin
-            MakeSlideshow(sl, wic, bm, bme, Done, true);
+            MakeSlideshow(sl, wic, bm, bme, Done, True);
           end);
         while not Done do
         begin
@@ -509,7 +509,7 @@ begin
       end
       else
       begin
-        MakeSlideshow(sl, wic, bm, bme, Done, false);
+        MakeSlideshow(sl, wic, bm, bme, Done, False);
       end;
       StopWatch.Stop;
       bme.Finalize;
@@ -525,7 +525,7 @@ begin
     end;
   finally
     sl.Free;
-    fWriting := false;
+    fWriting := False;
   end;
 end;
 
@@ -550,7 +550,7 @@ begin
     ShowMessage('Encoding in progress, wait until finished.');
     Exit;
   end;
-  fWriting := true;
+  fWriting := True;
   try
     if not FileExists(AudioFileName.Caption) then
       af := ''
@@ -589,7 +589,7 @@ begin
         wic.LoadFromFile(StartImageFile.Caption);
         WicToBmp(wic, bm);
         Status.Caption := 'Start Image';
-        bme.AddStillImage(bm, 5000, false);
+        bme.AddStillImage(bm, 5000, False);
         Status.Caption := 'Video Clip';
         try
           bme.OnProgress := TransCodeProgress;
@@ -608,8 +608,8 @@ begin
         WicToBmp(wic, bm);
         bme.OnProgress := nil;
         Status.Caption := 'End Image';
-        bme.CrossFadeTo(bm, 4000, false);
-        bme.AddStillImage(bm, 5000, false);
+        bme.CrossFadeTo(bm, 4000, False);
+        bme.AddStillImage(bm, 5000, False);
       finally
         bm.Free;
         wic.Free;
@@ -623,7 +623,7 @@ begin
     Status.Caption := 'Writing speed: ' + FloatToStrF(fps, ffFixed, 5,
       2) + ' fps';
   finally
-    fWriting := false;
+    fWriting := False;
   end;
 end;
 
@@ -651,7 +651,7 @@ begin
 end;
 
 procedure TDemoWMFMain.TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-VideoTime: int64; var DoAbort: Boolean);
+VideoTime: Int64; var DoAbort: Boolean);
 var
   min, sec: Integer;
 begin
@@ -671,10 +671,10 @@ begin
     ShowMessage('Encoding in progress, wait until finished.');
     exit;
   end;
-  fWriting := true;
+  fWriting := True;
   try
     Status.Caption := 'Working, please wait';
-    fUserAbort := false;
+    fUserAbort := False;
     TranscodeVideoFile(TranscoderInput.Caption, OutputFileName,
       TCodecID(Codecs.ItemIndex), Quality, VideoWidth, VideoHeight, FrameRate,
       CheckBox1.Checked, TransCodeProgress);
@@ -683,14 +683,14 @@ begin
     else
       Status.Caption := 'Done';
   finally
-    fWriting := false;
-    fUserAbort := false;
+    fWriting := False;
+    fUserAbort := False;
   end;
 end;
 
 procedure TDemoWMFMain.Button4Click(Sender: TObject);
 begin
-  fUserAbort := true;
+  fUserAbort := True;
 end;
 
 procedure TDemoWMFMain.PickAudioClick(Sender: TObject);
@@ -750,7 +750,7 @@ begin
   fDirectoryTree.Parent := Panel3;
   fDirectoryTree.Align := alClient;
   fDirectoryTree.Images := ImageList1;
-  fDirectoryTree.HideSelection := false;
+  fDirectoryTree.HideSelection := False;
   fFileList := TStringlist.Create;
   fDirectoryTree.NewRootFolder(TPath.GetPicturesPath);
   fOutputFile := GetDesktopFolder + '\Example';
@@ -830,7 +830,7 @@ begin
   Result := StrToInt(SampleRate.Text);
 end;
 
-function TDemoWMFMain.GetAudioStart: int64;
+function TDemoWMFMain.GetAudioStart: Int64;
 begin
   Result := AudioStartTime.Value;
 end;
@@ -962,6 +962,6 @@ end;
 
 initialization
 
-ReportMemoryLeaksOnShutDown := true;
+ReportMemoryLeaksOnShutDown := True;
 
 end.

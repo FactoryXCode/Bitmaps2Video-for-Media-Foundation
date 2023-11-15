@@ -664,8 +664,8 @@ end;
 
 constructor TResamplingThread.Create;
 begin
-  inherited Create(false);
-  FreeOnTerminate := false;
+  inherited Create(False);
+  FreeOnTerminate := False;
   Wakeup := TEvent.Create;
   Done := TEvent.Create;
   Ready := TEvent.Create;
@@ -720,7 +720,7 @@ begin
   end;
   SetLength(fResamplingThreads, 0);
   fThreadCount := 0;
-  fInitialized := false;
+  fInitialized := False;
 end;
 
 procedure TResamplingThreadPool.Initialize(aMaxThreadCount: Integer;
@@ -739,7 +739,7 @@ begin
     fResamplingThreads[i].Priority := aPriority;
     fResamplingThreads[i].Ready.Waitfor(INFINITE);
   end;
-  fInitialized := true;
+  fInitialized := True;
 end;
 
 procedure InitDefaultResamplingThreads;
