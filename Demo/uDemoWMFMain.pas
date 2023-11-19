@@ -3,22 +3,26 @@ unit uDemoWMFMain;
 interface
 
 uses
+  {Winapi}
   Winapi.Windows,
   Winapi.Messages,
   Winapi.ActiveX,
   Winapi.ShellAPI,
   Winapi.ShlObj,
+
+  System.Classes,
   System.SysUtils,
   System.Variants,
-  System.Classes,
   System.Math,
   {$IF COMPILERVERSION > 28.0}
   System.ImageList,
-  {$ENDIF}
+  {$ENDIF} // Delphi version XE4 or higher.
+  {System}
   System.Types,
   System.Diagnostics,
   System.IOUtils,
-  System.Threading,
+  System.Threading, // Delphi version XE7 or higher.
+  {VCL}
   VCL.Graphics,
   VCL.Controls,
   VCL.Forms,
@@ -28,6 +32,13 @@ uses
   VCL.ImgList,
   VCL.ComCtrls,
   VCL.Samples.Spin,
+  // Needed by TImage
+  VCL.Imaging.jpeg,
+  Vcl.Imaging.pngimage,
+  // ================
+  {MediaFoundation}
+  WinApi.MediaFoundation.VideoStandardsCheat,
+  {Application}
   uDirectoryTree,
   uScaleWMF,
   uScaleCommonWMF,
@@ -43,6 +54,7 @@ type
   private
     fOnSelChange: TNotifyEvent;
     procedure CNCommand(var AMessage: TWMCommand); message CN_COMMAND;
+
   public
     property OnSelChange: TNotifyEvent read fOnSelChange write fOnSelChange;
   end;
@@ -60,47 +72,45 @@ type
     Panel3: TPanel;
     Status: TLabel;
     Splitter1: TSplitter;
-    FileExt: TComboBox;
-    Codecs: TComboBox;
+    cbxFileExt: TComboBox;
+    cbxCodecs: TComboBox;
     Splitter2: TSplitter;
     Panel4: TPanel;
     Panel5: TPanel;
-    WriteSlideshow: TButton;
-    Background: TCheckBox;
+    butWriteSlideshow: TButton;
+    chkBackground: TCheckBox;
     Label2: TLabel;
     Label3: TLabel;
     Label4: TLabel;
-    Heights: TComboBox;
+    cbxResolution: TComboBox;
     ImageCount: TLabel;
     Preview: TPaintBox;
-    AspectRatio: TRadioGroup;
-    CodecInfo: TLabel;
-    ShowWidth: TLabel;
+    lblCodecInfo: TLabel;
     Label1: TLabel;
-    SetQuality: TSpinEdit;
+    spedSetQuality: TSpinEdit;
     Label5: TLabel;
     Label6: TLabel;
-    FrameRates: TComboBox;
-    CropLandscape: TCheckBox;
+    cbxFrameRates: TComboBox;
+    chkCropLandscape: TCheckBox;
     OutputInfo: TLabel;
-    ShowVideo: TButton;
-    ZoomInOut: TCheckBox;
+    butShowVideo: TButton;
+    chkZoomInOut: TCheckBox;
     Label9: TLabel;
     FODAudio: TFileOpenDialog;
     Button2: TButton;
     OD: TFileOpenDialog;
-    DebugTiming: TCheckBox;
-    SampleRate: TComboBox;
-    Bitrate: TComboBox;
+    chkDebugTiming: TCheckBox;
+    cbxAudioSampleRate: TComboBox;
+    cbxAudioBitrate: TComboBox;
     Label7: TLabel;
     Label10: TLabel;
     Label11: TLabel;
-    AudioStartTime: TSpinEdit;
+    spedAudioStartTime: TSpinEdit;
     Label12: TLabel;
-    AddAudio: TCheckBox;
+    chkAddAudio: TCheckBox;
     Label8: TLabel;
     Panel6: TPanel;
-    FileBox: TListBox;
+    lbxFileBox: TListBox;
     Splitter3: TSplitter;
     TabSheet3: TTabSheet;
     PickStartImage: TButton;
@@ -114,7 +124,6 @@ type
     CombineToVideo: TButton;
     PickAudio: TButton;
     AudioFileName: TLabel;
-    Label13: TLabel;
     Label14: TLabel;
     Label15: TLabel;
     Memo1: TMemo;
@@ -132,18 +141,21 @@ type
     Label19: TLabel;
     Button4: TButton;
     ImageList1: TImageList;
+    imgPreview: TImage;
+    Bevel1: TBevel;
+    Bevel2: TBevel;
 
     // Important procedure showing the use of TBitmapEncoderWMF
     procedure WriteAnimationClick(Sender: TObject);
 
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
-    procedure WriteSlideshowClick(Sender: TObject);
-    procedure FileExtChange(Sender: TObject);
-    procedure CodecsChange(Sender: TObject);
-    procedure HeightsChange(Sender: TObject);
+    procedure butWriteSlideshowClick(Sender: TObject);
+    procedure cbxFileExtChange(Sender: TObject);
+    procedure cbxCodecsChange(Sender: TObject);
+    procedure cbxResolutionChange(Sender: TObject);
     procedure PreviewPaint(Sender: TObject);
-    procedure ShowVideoClick(Sender: TObject);
+    procedure butShowVideoClick(Sender: TObject);
     procedure Button2Click(Sender: TObject);
     procedure PageControl1Change(Sender: TObject);
     procedure PickStartImageClick(Sender: TObject);
@@ -159,48 +171,66 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
+    procedure lbxFileBoxClick(Sender: TObject);
+    procedure cbxFrameRatesChange(Sender: TObject);
+
   private
+    { Private-Declarations }
     fDirectoryTree: TDirectoryTree;
     fFileList: TStringlist;
     fOutputFile: string;
     fCodecList: TCodecIdArray;
+    fVideoStandardsCheat: TVideoStandardsCheat;
     fWriting: Boolean;
     fFramebm: TBitmap;
     fUserAbort: Boolean;
-    function GetOutputFileName: string;
+    fAspectRatio: Double;
+    iVideoWidth: Integer;
+    iVideoHeight: Integer;
+
+    function GetOutputFileName(): string;
     procedure DoUpdate(var msg: TMessage); message MsgUpdate;
     procedure DirectoryTreeChange(Sender: TObject; node: TTreeNode);
-    function GetAspect: Double;
-    function GetVideoWidth: Integer;
 
     // Important procedure showing the use of TBitmapEncoderWMF
-    procedure MakeSlideshow(const sl: TStringlist; const wic: TWicImage;
-      const bm: TBitmap; const bme: TBitmapEncoderWMF; var Done: Boolean;
-      threaded: Boolean);
+    procedure MakeSlideshow(const sl: TStringlist;
+                            const wic: TWicImage;
+                            const bm: TBitmap;
+                            const bme: TBitmapEncoderWMF;
+                            var Done: Boolean;
+                            threaded: Boolean);
 
-    function GetFrameRate: Single;
-    function GetDoCrop: Boolean;
-    function GetDoZoomInOut: Boolean;
-    function GetVideoHeight: Integer;
-    function GetAudioFile: string;
-    function GetQuality: Integer;
-    function GetAudioBitRate: Integer;
-    function GetAudioSampleRate: Integer;
-    function GetAudioStart: Int64;
-    function GetAudioDialog: Boolean;
-    procedure FileBoxSelChange(Sender: TObject);
-    procedure TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-      VideoTime: Int64; var DoAbort: Boolean);
-    procedure DisplayVideoInfo(const aMemo: TMemo; const VideoInfo: TVideoInfo);
-    { Private-Deklarationen }
+    procedure GetResolutions();
+    procedure SetResolution();
+
+    procedure GetFramerates();
+    function SetFrameRate(): Double;
+
+    function GetDoCrop(): Boolean;
+    function GetDoZoomInOut(): Boolean;
+    function GetAudioFile(): string;
+    function GetQuality(): Integer;
+    function GetAudioBitRate(): Integer;
+    function GetAudioSampleRate(): Integer;
+    function GetAudioStart(): Int64;
+    function GetAudioDialog(): Boolean;
+    procedure lbxFileBoxSelChange(Sender: TObject);
+    procedure TransCodeProgress(Sender: TObject;
+                                FrameCount: Cardinal;
+                                VideoTime: Int64;
+                                var DoAbort: Boolean);
+    procedure DisplayVideoInfo(const aMemo: TMemo;
+                               const VideoInfo: TVideoInfo);
+
   public
+    { Public-Declarations }
     // properties which read the input parameters for the bitmap-encoder
     // off the controls of the form
     property OutputFileName: string read GetOutputFileName;
-    property Aspect: Double read GetAspect;
-    property VideoHeight: Integer read GetVideoHeight;
-    property VideoWidth: Integer read GetVideoWidth;
-    property FrameRate: Single read GetFrameRate;
+    property Aspect: Double read fAspectRatio;
+    property VideoHeight: Integer read iVideoHeight;
+    property VideoWidth: Integer read iVideoWidth;
+    property FrameRate: Double read SetFrameRate;
     property Quality: Integer read GetQuality;
     property DoCrop: Boolean read GetDoCrop;
     property DoZoomInOut: Boolean read GetDoZoomInOut;
@@ -209,7 +239,7 @@ type
     property AudioBitRate: Integer read GetAudioBitRate;
     property AudioStart: Int64 read GetAudioStart;
     property AudioDialog: Boolean read GetAudioDialog;
-    { Public-Deklarationen }
+
   end;
 
 var
@@ -219,21 +249,28 @@ implementation
 
 {$R *.dfm}
 
+
 function PIDLToPath(IdList: PItemIDList): string;
 begin
-  SetLength(Result, MAX_PATH);
-  if SHGetPathFromIdList(IdList, PChar(Result)) then
-    SetLength(Result, StrLen(PChar(Result)))
+  SetLength(Result,
+            MAX_PATH);
+
+  if SHGetPathFromIdList(IdList,
+                         PChar(Result)) then
+    SetLength(Result,
+              StrLen(PChar(Result)))
   else
     Result := '';
 end;
 
+
 function PidlFree(var IdList: PItemIDList): Boolean;
 var
   Malloc: IMalloc;
+
 begin
   Result := False;
-  if IdList = nil then
+  if (IdList = nil) then
     Result := True
   else
   begin
@@ -245,6 +282,7 @@ begin
     end;
   end;
 end;
+
 
 function GetDesktopFolder: string;
 var
@@ -259,6 +297,7 @@ begin
     Result := '';
 end;
 
+
 procedure TDemoWMFMain.WriteAnimationClick(Sender: TObject);
 var
   i, j, w, h: Integer;
@@ -272,23 +311,25 @@ var
   StopWatch: TStopWatch;
 
   function dist(o: Double): Double; inline;
-  begin
-    Result := 2 - 0.2 * o;
-  end;
+    begin
+      Result := 2 - 0.2 * o;
+    end;
 
-// map from world ([-2,2]x[-2,2]) to bitmap
+  // map from world ([-2,2] x [-2,2]) to bitmap
   function map(p: TPointF): TPoint;
-  begin
-    Result.x := round(xCenter + scale * p.x);
-    Result.y := round(yCenter - scale * p.y);
-  end;
+    begin
+      Result.x := Round(xCenter + scale * p.x);
+      Result.y := Round(yCenter - scale * p.y);
+    end;
 
 begin
+
   if fWriting then
-  begin
-    ShowMessage('Encoding in progress, wait until finished.');
-    exit;
-  end;
+    begin
+      ShowMessage('Encoding in progress, wait until finished.');
+      Exit;
+    end;
+
   fWriting := True;
   try
     h := VideoHeight;
@@ -296,11 +337,19 @@ begin
     Preview.Width := round(Aspect * Preview.Height);
     StopWatch := TStopWatch.Create;
     bme := TBitmapEncoderWMF.Create;
+
     try
       // Initialize the bitmap-encoder
-      bme.Initialize(OutputFileName, w, h, Quality, FrameRate,
-        fCodecList[Codecs.ItemIndex], cfBicubic);
-      bm := TBitmap.Create;
+      bme.Initialize(OutputFileName,
+                     w,
+                     h,
+                     Quality,
+                     FrameRate,
+                     fCodecList[cbxCodecs.ItemIndex],
+                     cfBicubic);
+
+      bm := TBitmap.Create();
+
       try
         // AntiAlias 2*Video-Height
         bm.SetSize(2 * w, 2 * h);
@@ -310,49 +359,75 @@ begin
 
         bm.Canvas.brush.color := clMaroon;
         bm.Canvas.pen.color := clYellow;
-        bm.Canvas.pen.Width := Max(h div 180, 2);
+        bm.Canvas.pen.Width := Max(h div 180,
+                               2);
 
-        dtheta := 2 / 150 * pi;
+        dtheta := 2 / 150 * Pi;
         StopWatch.Start;
+
         // Draw a sequence of spirals
         for i := 0 to 200 do
-        begin
-          A := 1 - 1 / 210 * i;
-          jmax := trunc(10 / A / dtheta);
-          SetLength(points, jmax);
-          theta := 0;
-          for j := 0 to jmax - 1 do
           begin
-            r := dist(A * theta);
-            points[j] := map(Pointf(r * cos(theta), r * sin(theta)));
-            theta := theta + dtheta;
-          end;
+            A := 1 - 1 / 210 * i;
+            jmax := trunc(10 / A / dtheta);
+            SetLength(points,
+                      jmax);
+            theta := 0;
+
+            for j := 0 to jmax - 1 do
+              begin
+                r := dist(A * theta);
+                points[j] := map(Pointf(r * cos(theta), r * sin(theta)));
+                theta := theta + dtheta;
+              end;
+
           bm.Canvas.Fillrect(bm.Canvas.clipRect);
           bm.Canvas.PolyLine(points);
 
-          bme.AddFrame(bm, False);
+          bme.AddFrame(bm,
+                       False);
 
-          Status.Caption := 'Frame ' + (i + 1).ToString;
+          Status.Caption := Format('Frame %d',
+                                   [(i + 1)]);
           Status.Repaint;
-          if i mod 10 = 1 then
-          begin
-            pre := TBitmap.Create;
-            try
-              uScaleWMF.Resample(Preview.Width, Preview.Height, bm, pre,
-                cfBilinear, 0, True, amIgnore);
-              BitBlt(Preview.Canvas.Handle, 0, 0, pre.Width, pre.Height,
-                pre.Canvas.Handle, 0, 0, SRCCopy);
-            finally
-              pre.Free;
-            end;
+
+          if (i mod 10 = 1) then
+            begin
+              pre := TBitmap.Create;
+              try
+                uScaleWMF.Resample(Preview.Width,
+                                   Preview.Height,
+                                   bm,
+                                   pre,
+                                   cfBilinear,
+                                   0,
+                                   True,
+                                   amIgnore);
+
+                BitBlt(Preview.Canvas.Handle,
+                       0,
+                       0,
+                       pre.Width,
+                       pre.Height,
+                       pre.Canvas.Handle,
+                       0,
+                       0,
+                       SRCCopy);
+              finally
+                pre.Free();
+              end;
           end;
         end;
         StopWatch.Stop;
-        Status.Caption := 'Writing speed including drawing to canvas: ' +
-          FloatToStrF(bme.FrameCount * 1000 / StopWatch.ElapsedMilliseconds,
-          ffFixed, 5, 2) + ' fps';
+        Status.Caption := Format('%s %s %s',
+                                 ['Writing speed including drawing to canvas:',
+                                  FloatToStrF(bme.FrameCount * 1000 / StopWatch.ElapsedMilliseconds,
+                                              ffFixed,
+                                              5,
+                                              2),
+                                  'fps']);
       finally
-        bm.Free;
+        bm.Free();
       end;
       bme.Finalize;
 
@@ -364,6 +439,7 @@ begin
   end;
 end;
 
+
 function GetRandomZoom: TZoom; inline;
 begin
   Result.xCenter := 0.5 + (random - 0.5) * 0.7;
@@ -374,6 +450,7 @@ begin
   Assert(Result.Radius > 0);
   Result.Radius := 0.5 * Result.Radius;
 end;
+
 
 procedure TDemoWMFMain.MakeSlideshow(const sl: TStringlist;
   const wic: TWicImage; const bm: TBitmap; const bme: TBitmapEncoderWMF;
@@ -389,6 +466,7 @@ var
   // an aspect-preserving sub-rectangle of the target.
   Zooms, Zoom: TZoom;
   DoInOut: Boolean;
+
 begin
   wic.LoadFromFile(sl.Strings[0]);
   WicToBmp(wic, bm);
@@ -425,15 +503,21 @@ begin
   Done := True;
 end;
 
-procedure TDemoWMFMain.ShowVideoClick(Sender: TObject);
+
+procedure TDemoWMFMain.butShowVideoClick(Sender: TObject);
 begin
   if not fWriting then
     if FileExists(OutputFileName) then
-      ShellExecute(Handle, 'open', PWideChar(OutputFileName), nil, nil,
-        SW_SHOWNORMAL);
+      ShellExecute(Handle,
+                   'open',
+                   PWideChar(OutputFileName),
+                   nil,
+                   nil,
+                   SW_SHOWNORMAL);
 end;
 
-procedure TDemoWMFMain.WriteSlideshowClick(Sender: TObject);
+
+procedure TDemoWMFMain.butWriteSlideshowClick(Sender: TObject);
 var
   bme: TBitmapEncoderWMF;
   bm: TBitmap;
@@ -444,90 +528,131 @@ var
   sl: TStringlist;
   af: string;
   i: Integer;
+
 begin
   if fWriting then
   begin
     ShowMessage('Encoding in progress, wait until finished.');
     exit;
   end;
+
   af := '';
+
   if AudioDialog then
     af := AudioFile;
+
   fWriting := True;
+
   // Use a local stringlist because of threading
-  sl := TStringlist.Create;
+  sl := TStringlist.Create();
+
   try
     for i := 0 to fFileList.Count - 1 do
-      if FileBox.Selected[i] then
+      if lbxFileBox.Selected[i] then
         sl.Add(fFileList.Strings[i]);
-    if sl.Count = 0 then
-    begin
-      ShowMessage('No image files selected');
-      exit;
-    end;
-    bme := TBitmapEncoderWMF.Create;
-    bm := TBitmap.Create;
-    wic := TWicImage.Create;
-    StopWatch := TStopWatch.Create;
+
+    if (sl.Count = 0) then
+      begin
+        ShowMessage('No image files selected');
+        Exit;
+      end;
+
+    bme := TBitmapEncoderWMF.Create();
+    bm := TBitmap.Create();
+    wic := TWicImage.Create();
+    StopWatch := TStopWatch.Create();
+
     try
       Status.Caption := 'Working';
-      StopWatch.Start;
+      StopWatch.Start();
+
       // bms.PixelFormat := pf32bit;
       // bms.SetSize(VideoWidth, VideoHeight);
       // BitBlt(bms.Canvas.Handle, 0, 0, VideoWidth, VideoHeight, 0, 0, 0,
       // BLACKNESS);
+
       try
-        bme.Initialize(OutputFileName, VideoWidth, VideoHeight, Quality,
-          FrameRate, fCodecList[Codecs.ItemIndex], cfBicubic, af, AudioBitRate,
-          AudioSampleRate, AudioStart);
+        bme.Initialize(OutputFileName,
+                       VideoWidth,
+                       VideoHeight,
+                       Quality,
+                       FrameRate,
+                       fCodecList[cbxCodecs.ItemIndex],
+                       cfBicubic,
+                       af,
+                       AudioBitRate,
+                       AudioSampleRate,
+                       AudioStart);
       except
         on eAudioFormatException do
-        begin
-          ShowMessage
-            ('The format of the input file or the settings of bitrate or sample rate are not supported. Try again with different settings.');
-          exit;
-        end
+          begin
+            ShowMessage('The format of the input file or the settings of bitrate or sample rate are not supported.' +
+                        'Try again with different settings.');
+            Exit;
+          end
         else
           raise;
       end;
-      bme.TimingDebug := DebugTiming.Checked;
-      if Background.Checked then
-      begin
-        Done := False;
-        task := TTask.Run(
-          procedure
-          begin
-            MakeSlideshow(sl, wic, bm, bme, Done, True);
-          end);
-        while not Done do
+
+      bme.TimingDebug := chkDebugTiming.Checked;
+
+      if chkBackground.Checked then
         begin
-          Application.ProcessMessages;
-          sleep(100);
-        end;
-        task.Wait();
-        Application.ProcessMessages;
-      end
+          Done := False;
+          task := TTask.Run(procedure
+                              begin
+                                MakeSlideshow(sl,
+                                              wic,
+                                              bm,
+                                              bme,
+                                              Done,
+                                              True);
+                              end);
+
+          while not Done do
+            begin
+              Application.ProcessMessages();
+              sleep(100);
+            end;
+
+          task.Wait();
+          Application.ProcessMessages();
+        end
       else
-      begin
-        MakeSlideshow(sl, wic, bm, bme, Done, False);
-      end;
-      StopWatch.Stop;
-      bme.Finalize;
-      Status.Caption :=
-        'Writing speed including decoding of image files and computing transitions: '
-        + FloatToStrF(1000 * bme.FrameCount / StopWatch.ElapsedMilliseconds,
-        ffFixed, 5, 2) + ' fps';
-      Status.Repaint;
+        begin
+          MakeSlideshow(sl,
+                        wic,
+                        bm,
+                        bme,
+                        Done,
+                        False);
+        end;
+
+      StopWatch.Stop();
+      bme.Finalize();
+
+      Status.Caption := Format('%s: %s %s %s',
+                               ['Rendering finished',
+                                'Writing speed including decoding of image files and computing transitions:',
+                                FloatToStrF(1000 * bme.FrameCount / StopWatch.ElapsedMilliseconds,
+                                            ffFixed,
+                                            5,
+                                            2),
+                                'fps']);
+      Status.Repaint();
+
     finally
-      wic.Free;
-      bm.Free;
-      bme.Free;
+      wic.Free();
+      bm.Free();
+      bme.Free();
     end;
+
   finally
-    sl.Free;
+    sl.Free();
     fWriting := False;
   end;
 end;
+
 
 procedure TDemoWMFMain.CombineToVideoClick(Sender: TObject);
 var
@@ -540,88 +665,141 @@ var
   fps: Double;
 
 begin
+
   {$IF COMPILERVERSION < 29.0}
   // To prevent hint "fps could not be initialized" on lower versions.
   fps := 0.0;
   {$ENDIF}
 
   if fWriting then
-  begin
-    ShowMessage('Encoding in progress, wait until finished.');
-    Exit;
-  end;
+    begin
+      ShowMessage('Encoding in progress, wait until finished.');
+      Exit;
+    end;
+
   fWriting := True;
+
   try
+
     if not FileExists(AudioFileName.Caption) then
       af := ''
     else
       af := AudioFileName.Caption;
+
     proceed := FileExists(StartImageFile.Caption) and
-      FileExists(EndImageFile.Caption) and FileExists(VideoClipFile.Caption);
+               FileExists(EndImageFile.Caption) and
+               FileExists(VideoClipFile.Caption);
+
     proceed := proceed and (VideoClipFile.Caption <> OutputFileName);
+
     if not proceed then
-    begin
-      ShowMessage
-        ('Pick valid files for the images and the video clip first. The output filename cannot be identical to the video clip name.');
-      exit;
+      begin
+        ShowMessage('Pick valid files for the images and the video clip first.' +
+        'The output filename cannot be identical to the video clip name.');
+        Exit;
     end;
-    StopWatch := TStopWatch.Create;
-    bme := TBitmapEncoderWMF.Create;
+
+    StopWatch := TStopWatch.Create();
+    bme := TBitmapEncoderWMF.Create();
+
     try
-      StopWatch.Start;
+
+      StopWatch.Start();
       Status.Caption := 'Working';
+
       try
-        bme.Initialize(OutputFileName, VideoWidth, VideoHeight, Quality,
-          FrameRate, TCodecID(Codecs.ItemIndex), cfBicubic, af, 128,
-          44100, 9000);
+        bme.Initialize(OutputFileName,
+                       VideoWidth,
+                       VideoHeight,
+                       Quality,
+                       FrameRate,
+                       TCodecID(cbxCodecs.ItemIndex),
+                       cfBicubic,
+                       af,
+                       128,
+                       44100,
+                       9000);
+
       except
         on eAudioFormatException do
-        begin
-          ShowMessage('The format of the audio file is not supported.');
-          exit;
-        end
+          begin
+            ShowMessage('The format of the audio file is not supported.');
+            Exit;
+          end
         else
           raise;
       end;
-      wic := TWicImage.Create;
-      bm := TBitmap.Create;
+
+      wic := TWicImage.Create();
+      bm := TBitmap.Create();
+
       try
+
         wic.LoadFromFile(StartImageFile.Caption);
-        WicToBmp(wic, bm);
+
+        WicToBmp(wic,
+                 bm);
+
         Status.Caption := 'Start Image';
-        bme.AddStillImage(bm, 5000, False);
+        bme.AddStillImage(bm,
+                          5000,
+                          False);
+
         Status.Caption := 'Video Clip';
+
         try
+
           bme.OnProgress := TransCodeProgress;
-          bme.AddVideo(VideoClipFile.Caption, 4000);
+          bme.AddVideo(VideoClipFile.Caption,
+                       4000);
+
         except
           on EVideoFormatException do
-          begin
-            ShowMessage('Video format of ' + VideoClipFile.Caption +
-              ' is not supported.');
-            exit;
-          end
+            begin
+              ShowMessage('Video format of ' +
+                          VideoClipFile.Caption +
+                          ' is not supported.');
+              Exit;
+            end
           else
             raise;
         end;
+
         wic.LoadFromFile(EndImageFile.Caption);
-        WicToBmp(wic, bm);
+
+        WicToBmp(wic,
+                 bm);
+
         bme.OnProgress := nil;
         Status.Caption := 'End Image';
-        bme.CrossFadeTo(bm, 4000, False);
-        bme.AddStillImage(bm, 5000, False);
+
+        bme.CrossFadeTo(bm,
+                        4000,
+                        False);
+
+        bme.AddStillImage(bm,
+                          5000,
+                          False);
+
       finally
-        bm.Free;
-        wic.Free;
+        bm.Free();
+        wic.Free();
       end;
-      StopWatch.Stop;
+
+      StopWatch.Stop();
+
       fps := 1000 * bme.FrameCount / StopWatch.ElapsedMilliseconds;
+
     finally
       // destroy finalizes
-      bme.Free;
+      bme.Free();
     end;
-    Status.Caption := 'Writing speed: ' + FloatToStrF(fps, ffFixed, 5,
-      2) + ' fps';
+
+    Status.Caption := 'Writing speed: ' +
+                      FloatToStrF(fps,
+                                  ffFixed,
+                                  5,
+                                  2) + ' fps';
   finally
     fWriting := False;
   end;
@@ -631,10 +809,13 @@ end;
 procedure TDemoWMFMain.Button1Click(Sender: TObject);
 var
   VideoInfo: TVideoInfo;
+
 begin
   if not FODVideo.Execute then
-    exit;
+    Exit;
+
   TranscoderInput.Caption := FODVideo.FileName;
+
   try
     VideoInfo := GetVideoInfo(FODVideo.FileName);
   except
@@ -643,108 +824,165 @@ begin
   DisplayVideoInfo(Memo2, VideoInfo);
 end;
 
+
 procedure TDemoWMFMain.Button2Click(Sender: TObject);
 begin
   if not OD.Execute(self.Handle) then
-    exit;
+    Exit;
   fDirectoryTree.NewRootFolder(OD.FileName);
 end;
 
-procedure TDemoWMFMain.TransCodeProgress(Sender: TObject; FrameCount: Cardinal;
-VideoTime: Int64; var DoAbort: Boolean);
+
+procedure TDemoWMFMain.TransCodeProgress(Sender: TObject;
+                                         FrameCount: Cardinal;
+                                         VideoTime: Int64;
+                                         var DoAbort: Boolean);
 var
   min, sec: Integer;
+
 begin
   sec := VideoTime div 1000;
   min := sec div 60;
   sec := sec mod 60;
-  Status.Caption := 'Encoding time-stamp: ' + min.ToString + ':' + sec.ToString;
-  Status.Invalidate;
-  Application.ProcessMessages;
+
+  Status.Caption := Format('%s %d %s %d',
+                           ['Encoding time-stamp:',
+                            min,
+                            ':',
+                            sec]);
+
+  Status.Invalidate();
+  Application.ProcessMessages();
   DoAbort := fUserAbort;
 end;
+
 
 procedure TDemoWMFMain.Button3Click(Sender: TObject);
 begin
   if fWriting then
-  begin
-    ShowMessage('Encoding in progress, wait until finished.');
-    exit;
-  end;
+    begin
+      ShowMessage('Encoding in progress, wait until finished.');
+      Exit;
+    end;
+
   fWriting := True;
+
   try
+
     Status.Caption := 'Working, please wait';
     fUserAbort := False;
-    TranscodeVideoFile(TranscoderInput.Caption, OutputFileName,
-      TCodecID(Codecs.ItemIndex), Quality, VideoWidth, VideoHeight, FrameRate,
-      CheckBox1.Checked, TransCodeProgress);
+    TranscodeVideoFile(TranscoderInput.Caption,
+                       OutputFileName,
+                       TCodecID(cbxCodecs.ItemIndex),
+                       Quality,
+                       VideoWidth,
+                       VideoHeight,
+                       FrameRate,
+                       CheckBox1.Checked,
+                       TransCodeProgress);
+
     if fUserAbort then
       Status.Caption := 'Aborted'
     else
       Status.Caption := 'Done';
+
   finally
+
     fWriting := False;
     fUserAbort := False;
+
   end;
 end;
+
 
 procedure TDemoWMFMain.Button4Click(Sender: TObject);
 begin
   fUserAbort := True;
 end;
 
+
 procedure TDemoWMFMain.PickAudioClick(Sender: TObject);
 begin
   AudioFileName.Caption := AudioFile;
 end;
 
-procedure TDemoWMFMain.CodecsChange(Sender: TObject);
+
+procedure TDemoWMFMain.cbxCodecsChange(Sender: TObject);
 begin
-  CodecInfo.Caption := CodecInfos[fCodecList[Codecs.ItemIndex]];
+  lblCodecInfo.Caption := CodecInfos[fCodecList[cbxCodecs.ItemIndex]];
   OutputInfo.Caption := 'Output will be saved to ' + OutputFileName;
 end;
 
-procedure TDemoWMFMain.DirectoryTreeChange(Sender: TObject; node: TTreeNode);
+
+procedure TDemoWMFMain.DirectoryTreeChange(Sender: TObject;
+                                           node: TTreeNode);
 var
   i: Integer;
+
 begin
-  fDirectoryTree.GetAllFiles(fFileList, '*.bmp;*.jpg;*.png;*.gif');
-  FileBox.Clear;
+  fDirectoryTree.GetAllFiles(fFileList,
+                             '*.bmp;*.jpg;*.png;*.gif');
+  lbxFileBox.Clear();
+
   for i := 0 to fFileList.Count - 1 do
-  begin
-    FileBox.Items.Add(ExtractFileName(fFileList.Strings[i]));
-  end;
-  FileBox.SelectAll;
-  FileBoxSelChange(nil);
+    lbxFileBox.Items.Add(ExtractFileName(fFileList.Strings[i]));
+
+  lbxFileBox.SelectAll();
+  lbxFileBoxSelChange(nil);
 end;
 
-procedure TDemoWMFMain.FileBoxSelChange(Sender: TObject);
+
+procedure TDemoWMFMain.lbxFileBoxClick(Sender: TObject);
 begin
-  ImageCount.Caption := FileBox.SelCount.ToString +
-    ' images selected (bmp, jpg, png, gif)'
+  // show selected image.
+  imgPreview.Picture.LoadFromFile(fFileList.Strings[lbxFileBox.ItemIndex]);
+  //lbxFileBox.Items[lbxFileBox.ItemIndex];
 end;
+
+
+procedure TDemoWMFMain.lbxFileBoxSelChange(Sender: TObject);
+begin
+  ImageCount.Caption := Format('%d %s',
+                               [lbxFileBox.SelCount,
+                                'images selected (bmp, jpg, png, gif)']);
+end;
+
 
 procedure TDemoWMFMain.DoUpdate(var msg: TMessage);
 begin
-  Status.Caption := 'Image ' + (msg.WParam + 1).ToString;
-  Status.Repaint;
+  Status.Caption := Format('%s %d',
+                           ['Image',
+                            (msg.WParam + 1)]);
+  Status.Repaint();
 end;
 
-procedure TDemoWMFMain.FileExtChange(Sender: TObject);
+
+procedure TDemoWMFMain.cbxFileExtChange(Sender: TObject);
 var
   i: Integer;
+
 begin
-  fCodecList := GetSupportedCodecs(FileExt.Items[FileExt.ItemIndex]);
-  Codecs.Clear;
+  fCodecList := GetSupportedCodecs(cbxFileExt.Items[cbxFileExt.ItemIndex]);
+  cbxCodecs.Clear();
+
   for i := 0 to Length(fCodecList) - 1 do
-    Codecs.Items.Add(CodecNames[fCodecList[i]]);
-  Codecs.ItemIndex := 0;
-  CodecsChange(nil);
+    cbxCodecs.Items.Add(CodecNames[fCodecList[i]]);
+
+  cbxCodecs.ItemIndex := 0;
+  cbxCodecsChange(nil);
 end;
+
+
+procedure TDemoWMFMain.cbxFrameRatesChange(Sender: TObject);
+begin
+  SetFrameRate();
+end;
+
 
 procedure TDemoWMFMain.FormCreate(Sender: TObject);
 var
   i: Integer;
+
 begin
   fDirectoryTree := TDirectoryTree.Create(self);
   fDirectoryTree.Parent := Panel3;
@@ -755,196 +993,280 @@ begin
   fDirectoryTree.NewRootFolder(TPath.GetPicturesPath);
   fOutputFile := GetDesktopFolder + '\Example';
   fCodecList := GetSupportedCodecs('.mp4');
+
   for i := 0 to Length(fCodecList) - 1 do
-    Codecs.Items.Add(CodecNames[fCodecList[i]]);
-  Codecs.ItemIndex := 0;
+    cbxCodecs.Items.Add(CodecNames[fCodecList[i]]);
+
+  cbxCodecs.ItemIndex := 0;
   fDirectoryTree.OnChange := DirectoryTreeChange;
-  HeightsChange(nil);
-  CodecsChange(nil);
-  FileBox.OnSelChange := FileBoxSelChange;
-  fFramebm := TBitmap.Create;
+  fVideoStandardsCheat := TVideoStandardsCheat.Create();
+  GetResolutions();
+  GetFrameRates();
+  lbxFileBox.OnSelChange := lbxFileBoxSelChange;
+  fFramebm := TBitmap.Create();
   FrameBox.ControlStyle := FrameBox.ControlStyle + [csOpaque];
-  Randomize;
+  Randomize();
 end;
+
 
 procedure TDemoWMFMain.FormDestroy(Sender: TObject);
 begin
-  fFileList.Free;
-  fFramebm.Free;
+  fFileList.Free();
+  fFramebm.Free();
+  fVideoStandardsCheat.Free();
 end;
+
 
 procedure TDemoWMFMain.FrameBoxPaint(Sender: TObject);
 begin
-  BitBlt(FrameBox.Canvas.Handle, 0, 0, fFramebm.Width, fFramebm.Height,
-    fFramebm.Canvas.Handle, 0, 0, SRCCopy);
+  BitBlt(FrameBox.Canvas.Handle,
+         0,
+         0,
+         fFramebm.Width,
+         fFramebm.Height,
+         fFramebm.Canvas.Handle,
+         0,
+         0,
+         SRCCopy);
 end;
+
 
 procedure TDemoWMFMain.FrameNoChange(Sender: TObject);
 begin
   if FileExists(VideoClipFile.Caption) then
-  begin
-    if GetFrameBitmap(VideoClipFile.Caption, fFramebm, FrameBox.Height,
-      FrameNo.Value) then
     begin
-      FrameBox.Width := fFramebm.Width;
-      FrameBox.Invalidate;
+      if GetFrameBitmap(VideoClipFile.Caption,
+                        fFramebm,
+                        FrameBox.Height,
+                        FrameNo.Value) then
+        begin
+          FrameBox.Width := fFramebm.Width;
+          FrameBox.Invalidate;
+        end;
     end;
-  end;
 end;
 
-function TDemoWMFMain.GetAspect: Double;
+
+function TDemoWMFMain.GetAudioBitRate(): Integer;
 begin
-  Result := 1;
-  case AspectRatio.ItemIndex of
-    0:
-      Result := 16 / 9;
-    1:
-      Result := 4 / 3;
-    2:
-      Result := 3 / 2;
-  end;
+  Result := StrToInt(cbxAudioBitrate.Text);
 end;
 
-function TDemoWMFMain.GetAudioBitRate: Integer;
+
+function TDemoWMFMain.GetAudioDialog(): Boolean;
 begin
-  Result := StrToInt(Bitrate.Text);
+  Result := chkAddAudio.Checked;
 end;
 
-function TDemoWMFMain.GetAudioDialog: Boolean;
-begin
-  Result := AddAudio.Checked;
-end;
 
-function TDemoWMFMain.GetAudioFile: string;
+function TDemoWMFMain.GetAudioFile(): string;
 begin
   Result := '';
   FODAudio.FileName := '';
   if not FODAudio.Execute(Handle) then
-    exit;
+    Exit;
 
   Result := FODAudio.FileName;
 end;
 
-function TDemoWMFMain.GetAudioSampleRate: Integer;
+
+function TDemoWMFMain.GetAudioSampleRate(): Integer;
 begin
-  Result := StrToInt(SampleRate.Text);
+  Result := StrToInt(cbxAudioSampleRate.Text);
 end;
 
-function TDemoWMFMain.GetAudioStart: Int64;
+
+function TDemoWMFMain.GetAudioStart(): Int64;
 begin
-  Result := AudioStartTime.Value;
+  Result := spedAudioStartTime.Value;
 end;
 
-function TDemoWMFMain.GetDoCrop: Boolean;
+
+function TDemoWMFMain.GetDoCrop(): Boolean;
 begin
-  Result := CropLandscape.Checked;
+  Result := chkCropLandscape.Checked;
 end;
 
-function TDemoWMFMain.GetDoZoomInOut: Boolean;
+
+function TDemoWMFMain.GetDoZoomInOut(): Boolean;
 begin
-  Result := ZoomInOut.Checked;
+  Result := chkZoomInOut.Checked;
 end;
 
-const
-  FrameRateArray: array [0 .. 6] of Single = (25, 29.97, 30, 45, 60, 90, 120);
 
-function TDemoWMFMain.GetFrameRate: Single;
+procedure TDemoWMFMain.GetResolutions();
+var
+  i: Integer;
+
 begin
-  Result := FrameRateArray[FrameRates.ItemIndex];
+  cbxResolution.Clear();
+  // Get all resolutions.
+  fVideoStandardsCheat.GetResolutions();
+  for i := 0 to Length(fVideoStandardsCheat.Resolutions) -1 do
+    cbxResolution.Items.Append(Format('%s (%d x %d) AspectRatio: %s', [fVideoStandardsCheat.Resolutions[i].Resolution,
+                                                                       fVideoStandardsCheat.Resolutions[i].iWidth,
+                                                                       fVideoStandardsCheat.Resolutions[i].iHeight,
+                                                                       fVideoStandardsCheat.Resolutions[i].StrAspectRatio]));
+  // Default resolution and aspect ratio.
+  cbxResolution.ItemIndex := 50; // 4K 16:9
+  SetResolution();
 end;
 
-function TDemoWMFMain.GetOutputFileName: string;
+
+procedure TDemoWMFMain.GetFramerates();
+var
+  i: Integer;
 begin
-  Result := fOutputFile + '_' + CodecShortNames[fCodecList[Codecs.ItemIndex]] +
-    FileExt.Text;
+  cbxFrameRates.Clear();
+  fVideoStandardsCheat.GetFrameRates();
+  for i := 0 to Length(fVideoStandardsCheat.FrameRates) -1 do
+    cbxFrameRates.Items.Append(string(fVideoStandardsCheat.FrameRates[i].sFrameRate));
+  cbxFrameRates.ItemIndex := 14 // 60 fps
 end;
 
-function TDemoWMFMain.GetQuality: Integer;
+
+function TDemoWMFMain.SetFrameRate(): Double;
 begin
-  Result := SetQuality.Value;
+  fVideoStandardsCheat.CurrentFrameRate := cbxFrameRates.ItemIndex;
+  cbxFrameRates.Hint := string(fVideoStandardsCheat.FrameRates[fVideoStandardsCheat.CurrentFrameRate].sHint);
+  Result := fVideoStandardsCheat.FrameRates[fVideoStandardsCheat.CurrentFrameRate].FrameRate;
 end;
 
-function TDemoWMFMain.GetVideoHeight: Integer;
+
+
+function TDemoWMFMain.GetOutputFileName(): string;
 begin
-  Result := StrToInt(Heights.Text);
+  Result := Format('%s_%s%s',
+                   [fOutputFile,
+                    CodecShortNames[fCodecList[cbxCodecs.ItemIndex]],
+                    cbxFileExt.Text]);
 end;
 
-function TDemoWMFMain.GetVideoWidth: Integer;
+
+function TDemoWMFMain.GetQuality(): Integer;
 begin
-  Result := round(Aspect * VideoHeight);
+  Result := spedSetQuality.Value;
 end;
 
-procedure TDemoWMFMain.HeightsChange(Sender: TObject);
+
+procedure TDemoWMFMain.cbxResolutionChange(Sender: TObject);
 begin
-  ShowWidth.Caption := 'Width in p: ' + VideoWidth.ToString;
-  Preview.Invalidate;
+  SetResolution();
+  Preview.Invalidate();
 end;
+
+
+procedure TDemoWMFMain.SetResolution();
+begin
+  // store current resolution
+  fVideoStandardsCheat.CurrentResolution := cbxResolution.ItemIndex;
+  iVideoWidth := fVideoStandardsCheat.Resolutions[fVideoStandardsCheat.CurrentResolution].iWidth;
+  iVideoHeight := fVideoStandardsCheat.Resolutions[fVideoStandardsCheat.CurrentResolution].iHeight;
+  fAspectRatio := fVideoStandardsCheat.Resolutions[fVideoStandardsCheat.CurrentResolution].AspectRatio;
+end;
+
 
 procedure TDemoWMFMain.PageControl1Change(Sender: TObject);
 begin
-  if PageControl1.TabIndex = 1 then
-    DirectoryTreeChange(fDirectoryTree, fDirectoryTree.Selected);
+  if (PageControl1.TabIndex = 1) then
+    DirectoryTreeChange(fDirectoryTree,
+                        fDirectoryTree.Selected);
 end;
+
 
 procedure TDemoWMFMain.PickEndImageClick(Sender: TObject);
 begin
-  if not FODPic.Execute then
-    exit;
+  if not FODPic.Execute() then
+    Exit;
+
   EndImageFile.Caption := FODPic.FileName;
 end;
 
+
 procedure TDemoWMFMain.PickStartImageClick(Sender: TObject);
 begin
-  if not FODPic.Execute then
-    exit;
+  if not FODPic.Execute() then
+    Exit;
+
   StartImageFile.Caption := FODPic.FileName;
 end;
+
 
 procedure TDemoWMFMain.PickVideoClick(Sender: TObject);
 var
   VideoInfo: TVideoInfo;
+
 begin
   if not FODVideo.Execute then
-    exit;
+    Exit;
+
   try
+
     VideoInfo := GetVideoInfo(FODVideo.FileName);
+
   except
-    ShowMessage('Video format of ' + ExtractFileName(FODVideo.FileName) +
-      ' is not supported');
-    exit;
+    ShowMessage(Format('Video format of %s is not supported',
+                       [ExtractFileName(FODVideo.FileName)]));
+    Exit;
   end;
+
   VideoClipFile.Caption := FODVideo.FileName;
-  DisplayVideoInfo(Memo1, VideoInfo);
-  if GetFrameBitmap(FODVideo.FileName, fFramebm, FrameBox.Height, FrameNo.Value)
-  then
-  begin
-    FrameBox.Width := fFramebm.Width;
-    FrameBox.Invalidate;
-  end;
+  DisplayVideoInfo(Memo1,
+                   VideoInfo);
+
+  if GetFrameBitmap(FODVideo.FileName,
+                    fFramebm,
+                    FrameBox.Height,
+                    FrameNo.Value) then
+    begin
+      FrameBox.Width := fFramebm.Width;
+      FrameBox.Invalidate();
+    end;
 end;
 
+
 procedure TDemoWMFMain.DisplayVideoInfo(const aMemo: TMemo;
-const VideoInfo: TVideoInfo);
+                                        const VideoInfo: TVideoInfo);
 begin
-  aMemo.Clear;
+  aMemo.Clear();
+
   aMemo.Lines.Add('Codec name: ' + VideoInfo.CodecName);
-  aMemo.Lines.Add('Video size: ' + VideoInfo.VideoWidth.ToString + 'x' +
-    VideoInfo.VideoHeight.ToString);
-  aMemo.Lines.Add('Frame rate: ' + FloatToStrF(VideoInfo.FrameRate, ffFixed, 4,
-    2) + ' fps');
-  aMemo.Lines.Add('Duration: ' + FloatToStrF(VideoInfo.Duration / 1000 / 10000,
-    ffFixed, 5, 2) + ' sec');
-  aMemo.Lines.Add('Pixel aspect: ' + FloatToStrF(VideoInfo.PixelAspect,
-    ffFixed, 5, 4));
-  aMemo.Lines.Add('Interlace mode: ' + VideoInfo.InterlaceModeName + ' (' +
-    VideoInfo.InterlaceMode.ToString + ')');
-  aMemo.Lines.Add('Audio streams: ' + VideoInfo.AudioStreamCount.ToString);
+
+  aMemo.Lines.Add(Format('Video size: %d x %d',
+                         [VideoInfo.VideoWidth,
+                          VideoInfo.VideoHeight]));
+
+  aMemo.Lines.Add(Format('Frame rate: %s fps',
+                         [FloatToStrF(VideoInfo.FrameRate,
+                                      ffFixed,
+                                      4,
+                                      2)]));
+
+  aMemo.Lines.Add(Format('Duration: %s sec',
+                         [FloatToStrF(VideoInfo.Duration / 1000 / 10000,
+                                      ffFixed,
+                                      5,
+                                      2)]));
+
+  aMemo.Lines.Add(Format('Pixel aspect ratio: %s',
+                         [FloatToStrF(VideoInfo.PixelAspect,
+                                      ffFixed,
+                                      5,
+                                      4)]));
+
+  aMemo.Lines.Add(Format('Interlace mode: %s (%d)',
+                         [VideoInfo.InterlaceModeName,
+                          VideoInfo.InterlaceMode]));
+
+  aMemo.Lines.Add(Format('Audio streams: %d',
+                         [VideoInfo.AudioStreamCount]));
 end;
+
 
 procedure TDemoWMFMain.PreviewPaint(Sender: TObject);
 begin
-  Preview.Width := round(Preview.Height * Aspect);
-  Preview.Canvas.brush.color := clMaroon;
+  Preview.Width := Round(Preview.Height * Aspect);
+  Preview.Canvas.Brush.Color := clMaroon;
   Preview.Canvas.Fillrect(Preview.ClientRect);
 end;
 
@@ -954,9 +1276,9 @@ procedure TListBox.CNCommand(var AMessage: TWMCommand);
 begin
   inherited;
   if (AMessage.NotifyCode = LBN_SELCHANGE) then
-  begin
-    if Assigned(fOnSelChange) then
-      fOnSelChange(self);
+    begin
+      if Assigned(fOnSelChange) then
+        fOnSelChange(Self);
   end;
 end;
 

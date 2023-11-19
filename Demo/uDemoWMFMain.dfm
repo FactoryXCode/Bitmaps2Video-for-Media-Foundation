@@ -3,7 +3,7 @@ object DemoWMFMain: TDemoWMFMain
   Top = 0
   Caption = 'DemoWMFMain'
   ClientHeight = 681
-  ClientWidth = 1264
+  ClientWidth = 1064
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,23 +17,24 @@ object DemoWMFMain: TDemoWMFMain
   PixelsPerInch = 96
   TextHeight = 15
   object Splitter1: TSplitter
-    Left = 225
+    Left = 261
     Top = 0
+    Width = 1
     Height = 681
-    ExplicitLeft = 200
-    ExplicitTop = 200
-    ExplicitHeight = 100
+    ExplicitLeft = 225
   end
   object SettingsPanel: TPanel
     Left = 0
     Top = 0
-    Width = 225
+    Width = 261
     Height = 681
     Align = alLeft
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 0
-    ExplicitHeight = 596
+    ExplicitTop = -1
     DesignSize = (
-      225
+      261
       681)
     object Label2: TLabel
       Left = 8
@@ -52,54 +53,54 @@ object DemoWMFMain: TDemoWMFMain
     object Label4: TLabel
       Left = 8
       Top = 191
-      Width = 105
+      Width = 101
       Height = 15
-      Caption = 'Choose height in p: '
+      Caption = 'Choose resolution: '
     end
-    object CodecInfo: TLabel
-      Left = 8
+    object lblCodecInfo: TLabel
+      Left = 1
       Top = 106
-      Width = 211
+      Width = 261
       Height = 79
       Anchors = [akLeft, akTop, akRight]
       AutoSize = False
-      Caption = 'CodecInfo'
+      Caption = 'lblCodecInfo'
+      Color = clInfoBk
+      ParentColor = False
+      Transparent = False
       WordWrap = True
-      ExplicitWidth = 227
-    end
-    object ShowWidth: TLabel
-      Left = 8
-      Top = 241
-      Width = 63
-      Height = 15
-      Caption = 'ShowWidth'
     end
     object Label5: TLabel
-      Left = 8
-      Top = 308
-      Width = 188
+      Left = 9
+      Top = 246
+      Width = 92
       Height = 15
-      Caption = 'Set the encoding quality (10 to 100)'
+      Hint = '(recommended: >=60)'
+      Caption = 'Encoding quality:'
+      ParentShowHint = False
+      ShowHint = True
     end
     object Label6: TLabel
-      Left = 8
-      Top = 383
-      Width = 138
+      Left = 9
+      Top = 300
+      Width = 89
       Height = 15
-      Caption = 'Choose a frame rate [fps]: '
+      Caption = 'Frame rate [fps]: '
     end
     object OutputInfo: TLabel
-      Left = 3
-      Top = 425
-      Width = 219
-      Height = 57
+      Left = 1
+      Top = 362
+      Width = 261
+      Height = 70
       Alignment = taCenter
       Anchors = [akLeft, akTop, akRight]
       AutoSize = False
       Caption = 'Output info'
+      Color = clInfoBk
+      ParentColor = False
+      Transparent = False
       Layout = tlCenter
       WordWrap = True
-      ExplicitWidth = 235
     end
     object Label8: TLabel
       Left = 80
@@ -108,15 +109,8 @@ object DemoWMFMain: TDemoWMFMain
       Height = 15
       Caption = 'Only .mp4 presently'
     end
-    object Label13: TLabel
-      Left = 32
-      Top = 356
-      Width = 122
-      Height = 15
-      Caption = '(recommended: >=60)'
-    end
-    object FileExt: TComboBox
-      Left = 8
+    object cbxFileExt: TComboBox
+      Left = 9
       Top = 27
       Width = 57
       Height = 23
@@ -124,114 +118,92 @@ object DemoWMFMain: TDemoWMFMain
       ItemIndex = 0
       TabOrder = 0
       Text = '.mp4'
-      OnChange = FileExtChange
+      OnChange = cbxFileExtChange
       Items.Strings = (
-        '.mp4')
+        '.mp4'
+        '.AVI')
     end
-    object Codecs: TComboBox
+    object cbxCodecs: TComboBox
       Left = 8
       Top = 77
       Width = 171
       Height = 23
       Style = csDropDownList
       TabOrder = 1
-      OnChange = CodecsChange
+      OnChange = cbxCodecsChange
     end
-    object Heights: TComboBox
+    object cbxResolution: TComboBox
       Left = 8
       Top = 212
-      Width = 145
+      Width = 247
       Height = 23
       Style = csDropDownList
-      ItemIndex = 3
       TabOrder = 2
-      Text = '720'
-      OnChange = HeightsChange
+      OnChange = cbxResolutionChange
       Items.Strings = (
-        '360'
-        '480'
-        '540'
-        '720'
-        '1080'
-        '1440'
-        '2160')
+        'SD    360p  (640 x 360)'
+        'SD    480p  (640 x 480)'
+        'SD    480p  (854 x 480)'
+        'HD    720p  (1280 x 720)'
+        'FHD  1080p  (1920 x 1080)'
+        '2K   1080p  (2048 x 1080)'
+        'QHD  1440p  (2560 x 1440)'
+        '4K   2160p  (3840 x 2160)')
     end
-    object AspectRatio: TRadioGroup
-      Left = 0
-      Top = 262
-      Width = 185
-      Height = 40
-      Caption = 'Aspect Ratio:'
-      Columns = 3
-      ItemIndex = 0
-      Items.Strings = (
-        '16:9'
-        '4:3'
-        '3:2')
-      TabOrder = 3
-      OnClick = HeightsChange
-    end
-    object SetQuality: TSpinEdit
-      Left = 8
-      Top = 329
-      Width = 145
+    object spedSetQuality: TSpinEdit
+      Left = 9
+      Top = 267
+      Width = 57
       Height = 24
+      Hint = '(recommended: >=60)'
       Increment = 2
       MaxValue = 100
       MinValue = 10
-      TabOrder = 4
+      TabOrder = 3
       Value = 70
     end
-    object FrameRates: TComboBox
-      Left = 8
-      Top = 404
-      Width = 145
+    object cbxFrameRates: TComboBox
+      Left = 9
+      Top = 321
+      Width = 58
       Height = 23
       Style = csDropDownList
-      ItemIndex = 2
-      TabOrder = 5
-      Text = '30'
-      Items.Strings = (
-        '25'
-        '29.97'
-        '30'
-        '45'
-        '60'
-        '90'
-        '120')
+      TabOrder = 4
+      OnChange = cbxFrameRatesChange
     end
-    object ShowVideo: TButton
+    object butShowVideo: TButton
       Left = 8
-      Top = 488
+      Top = 450
       Width = 138
       Height = 25
       Caption = 'Play output video'
-      TabOrder = 6
-      OnClick = ShowVideoClick
+      TabOrder = 5
+      OnClick = butShowVideoClick
     end
   end
   object PagesPanel: TPanel
-    Left = 228
+    Left = 262
     Top = 0
-    Width = 1036
+    Width = 802
     Height = 681
     Align = alClient
+    ParentShowHint = False
+    ShowHint = True
     TabOrder = 1
-    ExplicitWidth = 863
-    ExplicitHeight = 596
+    ExplicitLeft = 228
+    ExplicitWidth = 1036
     object StatusPanel: TPanel
       Left = 1
       Top = 656
-      Width = 1034
+      Width = 800
       Height = 24
       Align = alBottom
       TabOrder = 0
-      ExplicitTop = 571
-      ExplicitWidth = 861
+      ExplicitWidth = 1034
       object Status: TLabel
         Left = 1
         Top = 1
-        Width = 1032
+        Width = 798
         Height = 22
         Align = alClient
         Alignment = taCenter
@@ -250,21 +222,19 @@ object DemoWMFMain: TDemoWMFMain
     object PageControl1: TPageControl
       Left = 1
       Top = 1
-      Width = 1034
+      Width = 800
       Height = 655
       ActivePage = TabSheet2
       Align = alClient
       MultiLine = True
+      ParentShowHint = False
+      ShowHint = True
       TabOrder = 1
+      TabWidth = 190
       OnChange = PageControl1Change
-      ExplicitWidth = 861
-      ExplicitHeight = 570
       object TabSheet1: TTabSheet
-        Caption = 'Animate a Canvas-Drawing'
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
+        Hint = 'Animate a Canvas-Drawing'
+        Caption = 'Animation'
         object Preview: TPaintBox
           Left = 144
           Top = 168
@@ -282,7 +252,7 @@ object DemoWMFMain: TDemoWMFMain
         object Label9: TLabel
           Left = 0
           Top = 0
-          Width = 853
+          Width = 792
           Height = 44
           Align = alTop
           Alignment = taCenter
@@ -306,10 +276,9 @@ object DemoWMFMain: TDemoWMFMain
         end
       end
       object TabSheet2: TTabSheet
-        Caption = 'Slideshow with Crossfade-Transitions'
+        Hint = 'Slideshow with Crossfade-Transitions'
+        Caption = 'Slideshow'
         ImageIndex = 1
-        ExplicitWidth = 853
-        ExplicitHeight = 540
         object Splitter2: TSplitter
           Left = 313
           Top = 0
@@ -325,16 +294,13 @@ object DemoWMFMain: TDemoWMFMain
           Height = 625
           Align = alLeft
           TabOrder = 0
-          ExplicitHeight = 540
           object Splitter3: TSplitter
             Left = 1
-            Top = 387
+            Top = 385
             Width = 311
-            Height = 3
+            Height = 5
             Cursor = crVSplit
             Align = alBottom
-            ExplicitLeft = 0
-            ExplicitTop = 242
           end
           object Panel2: TPanel
             Left = 1
@@ -357,10 +323,10 @@ object DemoWMFMain: TDemoWMFMain
             Left = 1
             Top = 26
             Width = 311
-            Height = 361
+            Height = 359
             Align = alClient
             TabOrder = 1
-            ExplicitHeight = 276
+            ExplicitHeight = 153
           end
           object Panel6: TPanel
             Left = 1
@@ -370,8 +336,7 @@ object DemoWMFMain: TDemoWMFMain
             Align = alBottom
             Caption = 'Panel6'
             TabOrder = 2
-            ExplicitTop = 305
-            object FileBox: TListBox
+            object lbxFileBox: TListBox
               Left = 1
               Top = 1
               Width = 309
@@ -380,122 +345,152 @@ object DemoWMFMain: TDemoWMFMain
               ItemHeight = 15
               MultiSelect = True
               TabOrder = 0
+              OnClick = lbxFileBoxClick
+              ExplicitTop = -1
+              ExplicitHeight = 234
             end
           end
         end
         object Panel4: TPanel
           Left = 316
           Top = 0
-          Width = 710
+          Width = 476
           Height = 625
           Align = alClient
           TabOrder = 1
-          ExplicitWidth = 537
-          ExplicitHeight = 540
-          DesignSize = (
-            710
-            625)
+          ExplicitLeft = 317
+          ExplicitTop = -1
           object ImageCount: TLabel
             Left = 1
             Top = 1
-            Width = 708
+            Width = 474
             Height = 15
             Align = alTop
             Alignment = taCenter
             Caption = 'ImageCount'
             Layout = tlCenter
-            ExplicitWidth = 66
+            ExplicitLeft = 2
+            ExplicitTop = -1
+          end
+          object imgPreview: TImage
+            Left = 1
+            Top = 353
+            Width = 474
+            Height = 271
+            Align = alClient
+            Center = True
+            ParentShowHint = False
+            Proportional = True
+            ShowHint = False
+            Transparent = True
+            ExplicitLeft = 2
+            ExplicitTop = 364
+            ExplicitHeight = 260
           end
           object Panel5: TPanel
             Left = 1
-            Top = 48
-            Width = 708
-            Height = 400
-            Anchors = [akLeft, akTop, akRight]
+            Top = 16
+            Width = 474
+            Height = 337
+            Align = alTop
             TabOrder = 0
-            ExplicitWidth = 535
+            ExplicitLeft = 6
+            ExplicitTop = 17
+            object Bevel2: TBevel
+              Left = 8
+              Top = 124
+              Width = 443
+              Height = 161
+            end
             object Label7: TLabel
-              Left = 15
-              Top = 237
-              Width = 102
+              Left = 21
+              Top = 132
+              Width = 106
               Height = 15
               Caption = 'Audio sample rate: '
             end
             object Label10: TLabel
-              Left = 16
-              Top = 287
+              Left = 21
+              Top = 182
               Width = 118
               Height = 15
               Caption = 'Audio bitrate [kb/sec]:'
             end
             object Label11: TLabel
-              Left = 5
-              Top = 337
-              Width = 276
-              Height = 54
+              Left = 173
+              Top = 182
+              Width = 244
+              Height = 45
               Alignment = taCenter
-              AutoSize = False
               Caption = 
                 'Changing the sample rate from the one of the input-file might no' +
                 't be supported prior to Windows10.'
+              Transparent = True
               Layout = tlCenter
               WordWrap = True
             end
             object Label12: TLabel
-              Left = 176
-              Top = 237
+              Left = 21
+              Top = 230
               Width = 90
               Height = 15
               Caption = 'Audio Start [ms] '
             end
-            object WriteSlideshow: TButton
-              Left = 24
-              Top = 6
-              Width = 225
-              Height = 59
-              Caption = 'Make a slideshow from all selected images in the current folder'
+            object Bevel1: TBevel
+              Left = 9
+              Top = 3
+              Width = 443
+              Height = 115
+            end
+            object butWriteSlideshow: TButton
+              Left = 21
+              Top = 296
+              Width = 109
+              Height = 26
+              Hint = 'Ceate slideshow from all selected images in the current folder'
+              Caption = 'Render'
               TabOrder = 0
               WordWrap = True
-              OnClick = WriteSlideshowClick
+              OnClick = butWriteSlideshowClick
             end
-            object Background: TCheckBox
-              Left = 24
-              Top = 104
+            object chkBackground: TCheckBox
+              Left = 21
+              Top = 30
               Width = 177
-              Height = 33
+              Height = 17
               Caption = 'Run in background thread'
               TabOrder = 1
               WordWrap = True
             end
-            object CropLandscape: TCheckBox
-              Left = 24
-              Top = 133
+            object chkCropLandscape: TCheckBox
+              Left = 21
+              Top = 50
               Width = 217
               Height = 17
               Caption = 'Crop landscape images to video size'
               TabOrder = 2
             end
-            object ZoomInOut: TCheckBox
-              Left = 24
-              Top = 156
-              Width = 209
-              Height = 34
+            object chkZoomInOut: TCheckBox
+              Left = 21
+              Top = 71
+              Width = 284
+              Height = 17
               Caption = 'Include ZoomInOut-transitions (slows it down)'
               TabOrder = 3
               WordWrap = True
             end
-            object DebugTiming: TCheckBox
-              Left = 24
-              Top = 196
-              Width = 241
-              Height = 29
+            object chkDebugTiming: TCheckBox
+              Left = 21
+              Top = 92
+              Width = 331
+              Height = 17
               Caption = 'Debug Timing (Displays encoded timestamp in seconds)'
               TabOrder = 4
               WordWrap = True
             end
-            object SampleRate: TComboBox
-              Left = 16
-              Top = 258
+            object cbxAudioSampleRate: TComboBox
+              Left = 21
+              Top = 153
               Width = 145
               Height = 23
               Style = csDropDownList
@@ -506,9 +501,9 @@ object DemoWMFMain: TDemoWMFMain
                 '44100'
                 '48000')
             end
-            object Bitrate: TComboBox
-              Left = 16
-              Top = 308
+            object cbxAudioBitrate: TComboBox
+              Left = 21
+              Top = 203
               Width = 145
               Height = 23
               Style = csDropDownList
@@ -521,9 +516,9 @@ object DemoWMFMain: TDemoWMFMain
                 '160'
                 '192')
             end
-            object AudioStartTime: TSpinEdit
-              Left = 176
-              Top = 258
+            object spedAudioStartTime: TSpinEdit
+              Left = 21
+              Top = 251
               Width = 104
               Height = 24
               Increment = 1000
@@ -532,9 +527,9 @@ object DemoWMFMain: TDemoWMFMain
               TabOrder = 7
               Value = 0
             end
-            object AddAudio: TCheckBox
-              Left = 24
-              Top = 88
+            object chkAddAudio: TCheckBox
+              Left = 21
+              Top = 10
               Width = 225
               Height = 17
               Caption = 'Display dialog to add an audio file'
@@ -544,12 +539,11 @@ object DemoWMFMain: TDemoWMFMain
         end
       end
       object TabSheet3: TTabSheet
-        Caption = 'Video from Images and a Video Clip'
+        Hint = 'Video from Images and a Video Clip.'
+        Caption = 'Video from Images'
         ImageIndex = 2
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
+        ExplicitTop = 86
+        ExplicitHeight = 565
         object StartImageFile: TLabel
           Left = 152
           Top = 24
@@ -581,8 +575,8 @@ object DemoWMFMain: TDemoWMFMain
         object Label14: TLabel
           AlignWithMargins = True
           Left = 3
-          Top = 454
-          Width = 847
+          Top = 539
+          Width = 786
           Height = 83
           Align = alBottom
           Alignment = taCenter
@@ -705,12 +699,10 @@ object DemoWMFMain: TDemoWMFMain
         end
       end
       object TabSheet4: TTabSheet
-        Caption = 'Use TBitmapEncoderWMF as a transcoder'
+        Hint = 'Use TBitmapEncoderWMF as a transcoder'
+        Caption = 'Transcode'
         ImageIndex = 3
-        ExplicitLeft = 0
-        ExplicitTop = 0
-        ExplicitWidth = 0
-        ExplicitHeight = 0
+        ExplicitTop = 25
         object TranscoderInput: TLabel
           Left = 136
           Top = 36
@@ -721,7 +713,7 @@ object DemoWMFMain: TDemoWMFMain
         object Label19: TLabel
           Left = 24
           Top = 328
-          Width = 617
+          Width = 653
           Height = 89
           AutoSize = False
           Caption = 
@@ -765,6 +757,7 @@ object DemoWMFMain: TDemoWMFMain
           Top = 145
           Width = 289
           Height = 161
+          Color = clInfoBk
           Lines.Strings = (
             'Memo2')
           TabOrder = 3
@@ -799,15 +792,15 @@ object DemoWMFMain: TDemoWMFMain
     FileTypeIndex = 2
     Options = []
     Title = 'Choose an audio file.'
-    Left = 210
-    Top = 205
+    Left = 207
+    Top = 518
   end
   object OD: TFileOpenDialog
     FavoriteLinks = <>
     FileTypes = <>
     Options = [fdoPickFolders, fdoPathMustExist]
-    Left = 210
-    Top = 261
+    Left = 112
+    Top = 518
   end
   object FODPic: TFileOpenDialog
     FavoriteLinks = <>
@@ -821,8 +814,8 @@ object DemoWMFMain: TDemoWMFMain
         FileMask = '*.*'
       end>
     Options = []
-    Left = 209
-    Top = 315
+    Left = 159
+    Top = 518
   end
   object FODVideo: TFileOpenDialog
     FavoriteLinks = <>
@@ -836,14 +829,14 @@ object DemoWMFMain: TDemoWMFMain
         FileMask = '*.*'
       end>
     Options = []
-    Left = 209
-    Top = 371
+    Left = 66
+    Top = 519
   end
   object ImageList1: TImageList
-    Left = 209
-    Top = 431
+    Left = 18
+    Top = 518
     Bitmap = {
-      494C010101000800080010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010101000800200010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000000000000000000046819A004681
       9A0046819A0046819A0046819A0046819A003B6F8800305E7700305E7700305E

@@ -8,7 +8,8 @@ uses
   uScaleCommonWMF in '..\Source\uScaleCommonWMF.pas',
   uDirectoryTree in '..\Utilities\uDirectoryTree.pas',
   uToolsWMF in '..\Utilities\uToolsWMF.pas',
-  uTransformer in '..\Source\uTransformer.pas';
+  uTransformer in '..\Source\uTransformer.pas',
+  WinApi.MediaFoundation.VideoStandardsCheat in '..\..\..\src\WinApi.MediaFoundation.VideoStandardsCheat.pas';
 
 {$R *.res}
 
