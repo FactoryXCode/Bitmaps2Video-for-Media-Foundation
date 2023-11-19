@@ -34,4 +34,4 @@ Records with methods, anonymous procedures, interposer classes, tasks and TWicIm
 
 Runtime Requirement:
 
-To be able to use all encoding features, Windows 10 or higher is required. 
+To be able to use all encoding features, Windows 10 20H2 or higher is required. 
