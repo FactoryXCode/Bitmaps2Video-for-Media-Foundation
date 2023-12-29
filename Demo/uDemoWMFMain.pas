@@ -100,7 +100,6 @@ type
     pnlSettings: TPanel;
     StaticText6: TStaticText;
     cbxFileExt: TComboBox;
-    Label2: TLabel;
     Label3: TLabel;
     cbxCodecs: TComboBox;
     lblCodecInfo: TLabel;

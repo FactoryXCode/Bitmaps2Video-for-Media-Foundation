@@ -110,8 +110,8 @@ object DemoWMFMain: TDemoWMFMain
       Caption = 'Effect TIme'
     end
     object StaticText1: TStaticText
-      Left = 15
-      Top = 10
+      Left = 12
+      Top = 11
       Width = 114
       Height = 20
       Alignment = taCenter
@@ -436,7 +436,7 @@ object DemoWMFMain: TDemoWMFMain
       WordWrap = True
     end
     object StaticText5: TStaticText
-      Left = 10
+      Left = 11
       Top = 9
       Width = 112
       Height = 20
@@ -541,7 +541,7 @@ object DemoWMFMain: TDemoWMFMain
       Caption = 'Preview'
     end
     object StaticText8: TStaticText
-      Left = 10
+      Left = 11
       Top = 9
       Width = 112
       Height = 20
@@ -706,7 +706,7 @@ object DemoWMFMain: TDemoWMFMain
       Height = 348
     end
     object StaticText7: TStaticText
-      Left = 9
+      Left = 11
       Top = 11
       Width = 112
       Height = 20
@@ -874,13 +874,6 @@ object DemoWMFMain: TDemoWMFMain
       Margins.Top = 18
       Align = alClient
       ExplicitTop = 17
-    end
-    object Label2: TLabel
-      Left = 8
-      Top = 6
-      Width = 110
-      Height = 15
-      Caption = 'Choose file format: '
     end
     object Label3: TLabel
       Left = 63
@@ -1130,7 +1123,7 @@ object DemoWMFMain: TDemoWMFMain
     Left = 1029
     Top = 7
     Bitmap = {
-      494C010101000800400010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
+      494C010101000800440010001000FFFFFFFFFF10FFFFFFFFFFFFFFFF424D3600
       0000000000003600000028000000400000001000000001002000000000000010
       000000000000000000000000000000000000000000000000000046819A004681
       9A0046819A0046819A0046819A0046819A003B6F8800305E7700305E7700305E
