@@ -3,14 +3,24 @@
 interface
 
 uses
+  {WinApi}
   WinApi.Windows,
+  WinApi.Messages,
+  {Use the wrapper version of WinApi.WIC.Wincodec}
   WinApi.Wincodec,
+  {VCL}
   VCL.Graphics;
 
+  /// <summary>
+  /// Assigns a TWICImage to a TBitmap without setting its alphaformat to afDefined.
+  /// A TWICImage can be used for fast decoding of image formats .jpg, .bmp, .png, .ico, .tif.
+  /// </summary>
+  procedure WICToBmp(const aWic: TWICImage;
+                     const bmp: TBitmap);
 
-/// <summary> Assigns a TWICImage to a TBitmap without setting its alphaformat to afDefined. A TWICImage can be used for fast decoding of image formats .jpg, .bmp, .png, .ico, .tif. </summary>
-procedure WICToBmp(const aWic: TWICImage;
-                   const bmp: TBitmap);
+
+  procedure HandleThreadMessages(AThread: THandle;
+                                 AWait: Cardinal = INFINITE);
 
 implementation
 
@@ -20,9 +30,10 @@ procedure WICToBmp(const aWic: TWICImage;
 var
   LWicBitmap: IWICBitmapSource;
   Stride: Integer;
-  Buffer: array of byte;
+  w: Integer;
+  h: Integer;
+  Buffer: array of Byte;
   BitmapInfo: TBitmapInfo;
-  w, h: Integer;
 
 begin
   w := aWic.Width;
@@ -68,5 +79,32 @@ begin
             DIB_RGB_COLORS);
 end;
 
+
+procedure HandleThreadMessages(AThread: THandle;
+                               AWait: Cardinal = INFINITE);
+var
+  oMsg: TMsg;
+
+begin
+
+  while (MsgWaitForMultipleObjects(1,
+                                   AThread,
+                                   False,
+                                   AWait,
+                                   QS_ALLINPUT) = WAIT_OBJECT_0 + 1) do
+    begin
+      PeekMessage(oMsg,
+                  0,
+                  0,
+                  0,
+                  PM_REMOVE);
+
+      if oMsg.Message = WM_QUIT then
+        Exit;
+
+      TranslateMessage(oMsg);
+      DispatchMessage(oMsg);
+    end;
+end;
 
 end.

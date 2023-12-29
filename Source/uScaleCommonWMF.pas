@@ -68,6 +68,8 @@ const
                                               3,
                                               2);
 
+
+
 type
   // happens right now, if you use a custom thread pool which has not been initialized
   eParallelException = class(Exception);
@@ -98,10 +100,12 @@ type
     fResamplingThreadProc: TProc;
 
   protected
-    procedure Execute; override;
+    procedure Execute(); override;
 
   public
-    Wakeup, Done, Ready: TEvent;
+    Wakeup: TEvent;
+    Done: TEvent;
+    Ready: TEvent;
 
     procedure RunAnonProc(aProc: TProc);
 
@@ -290,10 +294,11 @@ begin
       sqr(x) + dd;
 end;
 
+
+function Bicubic(x: Double): Double; inline;
 const
   ac = -2;
 
-function Bicubic(x: Double): Double; inline;
 begin
   x := Abs(x);
   if (x < 1 / 2) then
@@ -311,7 +316,7 @@ var
   yinv: Double;
 
 begin
-  x := abs(x);
+  x := Abs(x);
 
   if (x = 0) then
     Result := 3
@@ -326,6 +331,15 @@ begin
 end;
 
 
+procedure MakeContributors(r: Single;
+                           SourceSize: Integer;
+                           TargetSize: Integer;
+                           SourceStart: Double;
+                           SourceFloatwidth: Double;
+                           Filter: TFilter;
+                           precision: TPrecision;
+                           var Contribs: TContribArray);
+
 const
   FilterFunctions: array [TFilter] of TFilterFunction = (Box,
                                                          Linear,
@@ -336,31 +350,35 @@ const
 
   PrecisionFacts: array [TPrecision] of Integer = ($100,
                                                    $800);
-  PreMultPrecision = 1 shl 2;
+  //PreMultPrecision = 1 shl 2;
 
   PointCount = 18; // 6 would be Simpson's rule, but I like emphasis on midpoint
   PointCountMinus2 = PointCount - 2;
   PointCountInv = 1 / PointCount;
 
-procedure MakeContributors(r: Single;
-                           SourceSize: Integer;
-                           TargetSize: Integer;
-                           SourceStart: Double;
-                           SourceFloatwidth: Double;
-                           Filter: TFilter;
-                           precision: TPrecision;
-                           var Contribs: TContribArray);
 // r: Filterradius
 var
-  xCenter, scale, rr: Double;
-  x, j: Integer;
-  x1, x2, x0, x3, delta, dw: Double;
-  TrueMin, TrueMax, Mx, prec: Integer;
-  sum, ds: Integer;
+  xCenter: Double;
+  scale: Double;
+  rr: Double;
+  x: Integer;
+  j: Integer;
+  x1: Double;
+  x2: Double;
+  x0: Double;
+  x3: Double;
+  delta: Double;
+  dw: Double;
+  TrueMin: Integer;
+  TrueMax: Integer;
+  Mx: Integer;
+  prec: Integer;
+  sum: Integer;
+  ds: Integer;
   FT: TFilterFunction;
 
 begin
-  if SourceFloatwidth = 0 then
+  if (SourceFloatwidth = 0) then
     SourceFloatwidth := SourceSize;
 
   scale := SourceFloatwidth / TargetSize;
@@ -471,6 +489,8 @@ begin
     end; { for x }
 end;
 
+const
+  PreMultPrecision = 1 shl 2;
 
 procedure Combine(const ps: PBGRA;
                   const Weight: Integer;
@@ -659,11 +679,19 @@ procedure ProcessRow(y: Integer;
                      {const} RTS: TResamplingThreadSetup;
                      AlphaCombineMode: TAlphaCombineMode); inline;
 var
-  ps, pT: PBGRA;
-  rs, rT: PByte;
-  x, i, j: Integer;
-  highx, highy, minx, miny: Integer;
-  Weightx, Weighty: PInteger;
+  ps: PBGRA;
+  pT: PBGRA;
+  rs: PByte;
+  rT: PByte;
+  x: Integer;
+  i: Integer;
+  j: Integer;
+  highx: Integer;
+  highy: Integer;
+  minx: Integer;
+  miny: Integer;
+  Weightx: PInteger;
+  Weighty: PInteger;
   Weight: Integer;
   Total: TBGRAInt;
   run: PBGRAInt;
@@ -785,11 +813,7 @@ begin
 end;
 
 
-const
-  Precisions: array [TAlphaCombineMode] of TPrecision = (prHigh,
-                                                         prLow,
-                                                         prHigh,
-                                                         prLow);
+
 
 procedure TResamplingThreadSetup.PrepareResamplingThreads(NewWidth: Integer;
                                                           NewHeight: Integer;
@@ -804,10 +828,16 @@ procedure TResamplingThreadSetup.PrepareResamplingThreads(NewWidth: Integer;
                                                           TargetPitch: Integer;
                                                           SourceStart: PByte;
                                                           TargetStart: PByte);
+const
+  Precisions: array [TAlphaCombineMode] of TPrecision = (prHigh,
+                                                         prLow,
+                                                         prHigh,
+                                                         prLow);
 var
   yChunkCount: Integer;
   yChunk: Integer;
-  j, Index: Integer;
+  j: Integer;
+  Index: Integer;
 
 begin
 
@@ -884,20 +914,20 @@ end;
 
 destructor TResamplingThread.Destroy();
 begin
-  Wakeup.Free;
-  Done.Free;
-  Ready.Free;
+  Wakeup.Free();
+  Done.Free();
+  Ready.Free();
   inherited;
 end;
 
 
-procedure TResamplingThread.Execute;
+procedure TResamplingThread.Execute();
 begin
-  while not terminated do
+  while not Terminated do
     begin
       Ready.SetEvent();
       Wakeup.Waitfor(INFINITE);
-      if not terminated then
+      if not Terminated then
         begin
           Wakeup.ResetEvent();
           fResamplingThreadProc;
@@ -918,7 +948,7 @@ end;
 
 { TResamplingThreadPool }
 
-procedure TResamplingThreadPool.Finalize;
+procedure TResamplingThreadPool.Finalize();
 var
   i: Integer;
 
@@ -984,7 +1014,7 @@ procedure FinalizeDefaultResamplingThreads();
 begin
   if not _DefaultThreadPool.fInitialized then
     Exit;
-  _DefaultThreadPool.Finalize;
+  _DefaultThreadPool.Finalize();
 end;
 
 

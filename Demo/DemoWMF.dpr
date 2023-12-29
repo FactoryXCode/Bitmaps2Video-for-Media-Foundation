@@ -9,7 +9,8 @@ uses
   uDirectoryTree in '..\Utilities\uDirectoryTree.pas',
   uToolsWMF in '..\Utilities\uToolsWMF.pas',
   uTransformer in '..\Source\uTransformer.pas',
-  WinApi.MediaFoundation.VideoStandardsCheat in '..\..\..\src\WinApi.MediaFoundation.VideoStandardsCheat.pas';
+  AudioMftClass in '..\Utilities\AudioMftClass.pas',
+  dlgAudioFormats in 'dlgAudioFormats.pas' {AudioFormatDlg};
 
 {$R *.res}
 
@@ -17,5 +18,6 @@ begin
   Application.Initialize;
   Application.MainFormOnTaskbar := True;
   Application.CreateForm(TDemoWMFMain, DemoWMFMain);
+  Application.CreateForm(TAudioFormatDlg, AudioFormatDlg);
   Application.Run;
 end.

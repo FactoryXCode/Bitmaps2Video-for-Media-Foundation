@@ -232,7 +232,8 @@ begin
       pix := PRGBQuad(row);
       for x := 1 to bm.Width do
         begin
-          if SameColor(PRGBTriple(pix), @pixColor) then
+          if SameColor(PRGBTriple(pix),
+                       @pixColor) then
             pix.rgbReserved := 0
           else
             pix.rgbReserved := 255;
