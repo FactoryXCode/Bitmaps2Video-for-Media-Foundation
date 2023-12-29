@@ -3,14 +3,15 @@ program DemoWMF;
 uses
   Vcl.Forms,
   uDemoWMFMain in 'uDemoWMFMain.pas' {DemoWMFMain},
-  uBitmaps2VideoWMF in '..\Source\uBitmaps2VideoWMF.pas',
-  uScaleWMF in '..\Source\uScaleWMF.pas',
-  uScaleCommonWMF in '..\Source\uScaleCommonWMF.pas',
-  uDirectoryTree in '..\Utilities\uDirectoryTree.pas',
-  uToolsWMF in '..\Utilities\uToolsWMF.pas',
-  uTransformer in '..\Source\uTransformer.pas',
-  AudioMftClass in '..\Utilities\AudioMftClass.pas',
-  dlgAudioFormats in 'dlgAudioFormats.pas' {AudioFormatDlg};
+  dlgAudioFormats in 'dlgAudioFormats.pas' {AudioFormatDlg},
+  AudioMftClass in 'Utilities\AudioMftClass.pas',
+  Profiles in 'Utilities\Profiles.pas',
+  uBitmaps2VideoWMF in 'Source\uBitmaps2VideoWMF.pas',
+  uScaleCommonWMF in 'Source\uScaleCommonWMF.pas',
+  uScaleWMF in 'Source\uScaleWMF.pas',
+  uTransformer in 'Source\uTransformer.pas',
+  uDirectoryTree in 'Utilities\uDirectoryTree.pas',
+  uToolsWMF in 'Utilities\uToolsWMF.pas';
 
 {$R *.res}
 

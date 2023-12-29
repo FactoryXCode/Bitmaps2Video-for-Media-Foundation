@@ -51,6 +51,8 @@ uses
   uTransformer,
   AudioMftClass;
 
+{$WARN SYMBOL_PLATFORM OFF}
+
 const
   MsgUpdate = WM_User + 1;
 
